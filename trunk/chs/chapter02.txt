@@ -7,7 +7,7 @@ h2. Ruby对象结构
 
 h3. 提纲
 
-从本章起，我们开始`ruby`源代码的探索之旅，首先研究的是对象结构的声明。
+从本章起，我们开始`ruby`源代码的探索之旅，首先研究的是对象结构体的声明。
 
 对象存在的必要条件是什么呢？我们可以给出许多解释，但事实上，有三个条件必须遵守：
 
@@ -17,14 +17,14 @@ h3. 提纲
 
 在本章，我们将逐个确认这三个特性。
 
-这次探索中最有趣的文件是`ruby.h`，但我们也要简要看一下其它文件，比如`object.c`, `class.c`或`variable.c`。
+这次探索中最值得关注的文件是`ruby.h`，不过，我们也会简要的看一下其它文件，比如`object.c`, `class.c`或`variable.c`。
 
-h3. `VALUE`和对象的结构
+h3. `VALUE`和对象结构体
 
-在`ruby`中，对象的内容表示为`C`的结构，通常是以指针对其操作。每个类用一个不同的结构表示，
+在`ruby`中，对象的内容表示为`C`的结构体，通常是以指针对其操作。每个类用一个不同的结构体表示，
 但指针的类型都是`VALUE`（图1）。
 
-!images/ch_object_value.png(`VALUE`和结构)!
+!images/ch_object_value.png(`VALUE`和结构体)!
 
 这是`VALUE`的定义：
 
@@ -35,7 +35,7 @@ h3. `VALUE`和对象的结构
 (ruby.h)
 </pre>
 
-在实践中，`VALUE`必须转型为不同结构类型的指针。 因此，如果`unsigned long`和指针大小不同，`ruby`会出现问题。
+在实践中，`VALUE`必须转型为不同结构体类型的指针。 因此，如果`unsigned long`和指针大小不同，`ruby`会出现问题。
 严格说来，在指针类型的大小大于`sizeof(unsigned long)`时才会出问题。
 幸运的是，最近的机器没有这种问题，即便从前存在过相当多这样的机器。
 
@@ -57,17 +57,17 @@ h3. `VALUE`和对象的结构
 
 !images/ch_object_string.png(字符串对象)!
 
-让我们来看几个对象结构的定义。
+让我们来看几个对象结构体的定义。
 
-▼ 对象结构的例子
+▼ 对象结构体的例子
 <pre class="longlist">
-      /* 普通对象的结构 */
+      /* 普通对象的结构体 */
  295  struct RObject {
  296      struct RBasic basic;
  297      struct st_table *iv_tbl;
  298  };
 
-      /* 字符串（String的实例）的结构 */
+      /* 字符串（String的实例）的结构体 */
  314  struct RString {
  315      struct RBasic basic;
  316      long len;
@@ -78,7 +78,7 @@ h3. `VALUE`和对象的结构
  321      } aux;
  322  };
 
-      /* 数组（Array的实例）的结构 */
+      /* 数组（Array的实例）的结构体 */
  324  struct RArray {
  325      struct RBasic basic;
  326      long len;
@@ -94,7 +94,7 @@ h3. `VALUE`和对象的结构
 
 在详细探讨它们之前，我们先来看一些更通用的话题。
 
-首先，`VALUE`定义为`unsigned long`，在使用之前必须进行转型。为此每个对象结构都需要有个`Rxxxx()`宏。
+首先，`VALUE`定义为`unsigned long`，在使用之前必须进行转型。为此每个对象结构体都需要有个`Rxxxx()`宏。
 比如说, 对`struct RString`来说是`RSTRING()`, 对`struct RArray`来说是`RARRAY()`，等等。这些宏的使用方式如下：
 
 <pre class="emlist">
@@ -104,8 +104,8 @@ RSTRING(str)->len;   /* ((struct RString*)str)->len */
 RARRAY(arr)->len;    /* ((struct RArray*)arr)->len */
 </pre>
 
-还有一点需要提及，所有的对象结构中都是以`basic`成员开头，其类型是类型为`struct RBasic`。这样做的结果是，
-无论`VALUE`指向何种类型的结构，只要你将`VALUE`转型为`struct RBasic*`，你都可以访问到`basic`的内容。
+还有一点需要提及，所有的对象结构体中都是以`basic`成员开头，其类型是类型为`struct RBasic`。这样做的结果是，
+无论`VALUE`指向何种类型的结构体，只要你将`VALUE`转型为`struct RBasic*`，你都可以访问到`basic`的内容。
 
 !images/ch_object_rbasic.png(`struct RBasic`)!
 
@@ -121,12 +121,12 @@ RARRAY(arr)->len;    /* ((struct RArray*)arr)->len */
 (ruby.h)
 </pre>
 
-`flags` 是个多目的的标记，大多用以记录结构类型(比如，`struct RObject`)。
+`flags` 是个多目的的标记，大多用以记录结构体类型(比如，`struct RObject`)。
 类型标记命名为 `T_xxxx`，可以使用宏 `TYPE()` 从 `VALUE`中获得。这是一个例子：
 
 <pre class="emlist">
 VALUE str;
-str = rb_str_new();    /* 创建Ruby字符串（其结构是RString） */
+str = rb_str_new();    /* 创建Ruby字符串（其结构体是RString） */
 TYPE(str);             /* 返回值是T_STRING */
 </pre>
 
@@ -144,9 +144,9 @@ TYPE(str);             /* 返回值是T_STRING */
 顺便说一下，这个成员的名字不是 `class` ，这是为了保证文件由C++编译器处理不会造成冲突，
 因为它是一个保留字。
 
-h4. 关于结构类型
+h4. 关于结构体类型
 
-我说过，结构类型存储在`struct Basic`的`flags`成员里。但是，为什么我们要存储结构的类型呢？
+我说过，结构体类型存储在`struct Basic`的`flags`成员里。但是，为什么我们要存储结构体的类型呢？
 这样就可以通过 `VALUE`处理所有不同类型的结构。如果把结构指针转型为`VALUE`，类型信息无法保留，
 编译器无法提供任何帮助。因此我们不得不自己管理类型。这就是统一处理所有结构类型的结果。
 

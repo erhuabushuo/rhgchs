@@ -543,11 +543,10 @@ h3. `rb_gc_mark_children()`
 
 h3. `rb_gc()`
 
-ここまででオブジェクト単位の話は済んだので、ここからは全体を統轄する関数
-`rb_gc()`を見ていくことにする。ここでマークしているのが「必要だということが
-明らかに分かっているオブジェクト」つまり「GCのルート」だ。
+至此，对象单元的讨论告一段落，现在来看看统辖全局的函数`rb_gc()`。
+这里标记的是“明白无误的必要对象”，也就是“GC的根”。
 
-▼ `rb_gc()`
+▼ `rb_gc()` （译注：在1.8中，这段代码对应着`gc.c`中的`garbage_collect`）
 <pre class="longlist">
 1110  void
 1111  rb_gc()
@@ -564,7 +563,7 @@ h3. `rb_gc()`
 1122          return;
 1123      }
 
-          /* ……全てのルートをマークする…… */
+          /* ……标记所有的根…… */
 
 1183      gc_sweep();
 1184  }
@@ -572,11 +571,10 @@ h3. `rb_gc()`
 (gc.c)
 </pre>
 
-マークすべきルートはこの後で順番に見せていくが、一点だけ触れておこう。
+标记过根之后，按顺序逐一处理，这里只强调一点。
 
-`ruby`ではCPUのレジスタやマシンスタックもルートとする。
-それはつまりCのローカル変数や引数も勝手にマークされるということだ。
-例えば
+在`ruby`中，CPU的寄存器和栈也被看作根。这样一来，会将C的局部变量和参数也标记上。
+比如。
 
 <pre class="emlist">
 static int
@@ -584,25 +582,20 @@ f(void)
 {
     VALUE arr = rb_ary_new();
 
-    /* ……いろいろする…… */
+    /* ……进行不同处理…… */
 }
 </pre>
 
-というように、ただ変数に入れておくだけでそのオブジェクトは保護されるの
-だ。これは`ruby`のGCの非常に大きな特徴である。この機能があるからこそ
-`ruby`の拡張ライブラリは異様に書き易くなっているのだ。
+正如前面提到的，只要将对象放到变量中就能够得到保护。这是`ruby`的GC一个很大的特征。
+正是因为有这个功能，`ruby`的扩展程序库变得非常容易编写。
 
-ただしもちろんスタックに置かれているのは`VALUE`ばかりではない。何の関係も
-ない値もたくさん存在する。そのあたりをどうやって解決しているのかがGCの
-実装を見ていくときの鍵だ。
+然而，栈中放置的并不只是`VALUE`，还有许多不相关的值。GC的实现如何解决这个问题是一个关键。
 
-h3. Rubyスタック
+h3. Ruby栈
 
-最初はインタプリタが使っている(`ruby`の)スタックフレームを
-マークする。第三部まで行けばこれが何者かはわかるので今はあまり
-深く考えなくてもいい。
+首先，解释器使用（`ruby`的）栈帧进行标记。第三部分会对此进行讨论，这里不必考虑太深。
 
-▼ Rubyスタックのマーク
+▼ 标记Ruby栈
 <pre class="longlist">
 1130      /* mark frame stack */
 1131      for (frame = ruby_frame; frame; frame = frame->prev) {
@@ -622,18 +615,17 @@ h3. Rubyスタック
 (gc.c)
 </pre>
 
-`ruby_frame ruby_class ruby_scope ruby_dyna_vars`がそれぞれ評価器の
-スタックの先頭を指す変数で、それぞれその時点でのフレーム、クラススコープ、
-ローカル変数スコープ、ブロックローカル変数を保持している。
+`ruby_frame ruby_class ruby_scope ruby_dyna_vars`几个变量各自一个指向评估器栈的头，
+分别维护着那一时刻的帧、类作用域、局部变量作用域和块变量。
 
-h3. レジスタ
+h3. 寄存器
 
-次にCPUのレジスタをマークする。
+然后标记CPU的寄存器。
 
-▼ レジスタのマーク
+▼ 标记寄存器
 <pre class="longlist">
 1148      FLUSH_REGISTER_WINDOWS;
-1149      /* ここで全てのレジスタがjmp_bufに保存されなければならない */
+1149      /* 这里将所有的寄存器保存在jmp_buf中 */
 1150      setjmp(save_regs_gc_mark);
 1151      mark_locations_array((VALUE*)save_regs_gc_mark,
                                sizeof(save_regs_gc_mark) / sizeof(VALUE *));
@@ -641,32 +633,26 @@ h3. レジスタ
 (gc.c)
 </pre>
 
-`FLUSH_REGISTER_WINDOWS`は特殊なので後にまわす。
+`FLUSH_REGISTER_WINDOWS`比较特殊，放到后面讨论。
 
-`setjmp()`は本当は遠隔ジャンプのための関数なのだけど、
-その副作用として引数(`jmp_buf`型の変数)にレジスタの内容を
-保存するようになっている。
-それを利用してレジスタの中身をマークしようというわけだ。
-このあたりはかなり裏技っぽい。
+`setjmp()`原本是为了实现远程跳转的函数，其副作用是将寄存器的内容保存在参数（`jmp_buf`类型的变量）之中。
+利用它对寄存器内容进行标记。这里是很有技巧的。
 
-ただしdjgppとHuman68kだけは特別扱いされている。
-djgppというのはDOS用の`gcc`環境。
-Human68kはシャープのX680x0シリーズのOSだ。
-この二つの環境では通常の`setjmp()`では全てのレジスタが書きこまれないよ
-うで、`setjmp()`を以下のようにインラインアセンブラで再定義して明示的にレジスタを書き出し
-ている。
+这里要特别提一下djgpp和Human68k。djpgg是DOS下的`gcc`环境。Human68k是SHARP公司X680x0系列的OS。
+在这两个环境下，通常用`setjmp()`不会把写入所有寄存器的内容，像下面这样用内联汇编重新定义`setjmp()`，
+显式的将寄存器写出。
 
-▼ オリジナル版`setjmp`
+▼ 原版`setjmp`
 <pre class="longlist">
 1072  #ifdef __GNUC__
 1073  #if defined(__human68k__) || defined(DJGPP)
 1074  #if defined(__human68k__)
 1075  typedef unsigned long rb_jmp_buf[8];
-1076  __asm__ (".even\n\                   2バイトアラインメント
-1077  _rb_setjmp:\n\                       関数rb_setjmp()のラベル
-1078          move.l  4(sp),a0\n\          第一引数をレジスタa0にロード
-1079          movem.l d3-d7/a3-a5,(a0)\n\  a0の指す先にレジスタをコピー
-1080          moveq.l #0,d0\n\             d0に0をセット(返り値)
+1076  __asm__ (".even\n\                   2字节对齐
+1077  _rb_setjmp:\n\                       函数rb_setjmp()的标签
+1078          move.l  4(sp),a0\n\          将第一个参数加载到寄存器a0
+1079          movem.l d3-d7/a3-a5,(a0)\n\  将a0指向的内容复制到寄存器
+1080          moveq.l #0,d0\n\             将d0设为0（返回值）
 1081          rts");                       return
 1082  #ifdef setjmp
 1083  #undef setjmp
@@ -674,19 +660,19 @@ Human68kはシャープのX680x0シリーズのOSだ。
 1085  #else
 1086  #if defined(DJGPP)
 1087  typedef unsigned long rb_jmp_buf[6];
-1088  __asm__ (".align 4\n\                4バイトアラインメントを指示
-1089  _rb_setjmp:\n\                       関数rb_setjmp()のラベル
-1090          pushl   %ebp\n\              ebpをスタックにプッシュ
-1091          movl    %esp,%ebp\n\         スタックポインタをebpにセット
-1092          movl    8(%ebp),%ebp\n\      第一引数を拾いebpにセット
-1093          movl    %eax,(%ebp)\n\       以下、各レジスタを
-1094          movl    %ebx,4(%ebp)\n\        ebpの指す先にストア
+1088  __asm__ (".align 4\n\                表示4字节对齐
+1089  _rb_setjmp:\n\                       函数rb_setjmp()的标签
+1090          pushl   %ebp\n\              将ebp推入栈
+1091          movl    %esp,%ebp\n\         将ebp设为栈指针
+1092          movl    8(%ebp),%ebp\n\      将第一个参数设置到ebp中
+1093          movl    %eax,(%ebp)\n\       下面，将各个寄存器
+1094          movl    %ebx,4(%ebp)\n\      保存到ebp指向的地址中
 1095          movl    %ecx,8(%ebp)\n\
 1096          movl    %edx,12(%ebp)\n\
 1097          movl    %esi,16(%ebp)\n\
 1098          movl    %edi,20(%ebp)\n\
-1099          popl    %ebp\n\              ebpをスタックから復帰
-1100          xorl    %eax,%eax\n\         eaxに0をセット(返り値)
+1099          popl    %ebp\n\              从栈中返回ebp
+1100          xorl    %eax,%eax\n\         将eax设为0（返回值）
 1101          ret");                       return
 1102  #endif
 1103  #endif
@@ -698,6 +684,9 @@ Human68kはシャープのX680x0シリーズのOSだ。
 
 (gc.c)
 </pre>
+
+所谓对齐（alignment）指的是将变量放到内存时所受的制约。比如，在32位机上，通常int就是32位的，
+这时候通常不需要，因为从内存任何地方取出都是32位。
 
 アラインメント(alignment)というのはメモリに変数を置くときの
 制約のことだ。

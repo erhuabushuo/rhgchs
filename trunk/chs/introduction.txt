@@ -550,11 +550,87 @@ h4. 在UNIX类OS上构建
 
 h4. 在Windows上构建
 
+在Windows上的构建比较复杂，问题的根源在于有许多构建环境。
+
+* Visual C++
+* MinGW
+* Cygwin
+* Borland C++ Compiler
+
+首先是Cygwin环境，它与UNIX环境非常接近，遵循UNIX类的构建方法就可以了。
+
+用Visual C++ 编译的话，Visual C++ 5.0以及以上版本是前提条件。版本6和.NET应该没有问题。
+
+MinGW, Minimalist GNU for Windows，是将GNU的编译环境（包括`gcc`和`binutils`）移植到Windows上。
+同Cygwin整体移植UNIX相比，MinGW只移植了编译所需要的工具。
+此外，使用MinGW编译的程序运行时并不需要特殊的DLL文件。
+也就是说，用MinGW编译的ruby可以与用Visual C++编译的版本同等对待。
+
+如果只是个人使用的话，还可以从Borland的网站上自由下载Borland C++ Compiler的5.5版。
+它对`ruby`的支持最近才开始，多少有些顾虑，不过，在本书出版之前的构建试验并没有发现什么特别的问题。
+
+如何在上述4个环境中做出选择呢？首先，推荐Visual C++，因为基本上它极少出问题。
+如果有UNIX经验，放上一套完整的Cygwin，使用Cygwin也是个不错的选择。
+没有UNIX经验，也没有Visual C++，不妨试试MinGW。
+
+下面说明一下Visual C++和MinGW的构建方法，不过，只是一些概要。
+更详尽的解释和在Borland C++ Compiler上的构建方法，请适当参考附赠CD-ROM中的doc/build.html。
+
 h4. Visual C++
+
+谈及Visual C++，通常并不使用IDE，而是DOS提示符来进行构建。
+为了Visual C++本身的运行，首先要初始化环境变量。
+Visual C++中有完成这个工作的批处理文件，先来执行它。
+
+<pre class="screen">
+C:\> cd "\Program Files\Microsoft Visual Studio .NET\Vc7\bin"
+C:\Program Files\Microsoft Visual Studio .NET\Vc7\bin> vcvars32
+</pre>
+
+这是Visual C++ .NET的情况。版本6在下面这个位置。
+C:\Program Files\Microsoft Visual Studio\VC98\bin\
+
+执行过vcvar32，转到ruby源码树的win32文件夹，构建就可以了。以下假定源码树在c:\src。
+
+<pre class="screen">
+C:\> cd src\ruby
+C:\src\ruby> cd win32
+C:\src\ruby\win32> configure
+C:\src\ruby\win32> nmake
+C:\src\ruby\win32> nmake DESTDIR="C:\Program Files\ruby" install
+</pre>
+
+这样执行之后，`ruby`命令安装到C:\Program Files\ruby\bin下，`ruby`的程序库安装到C:\ Program Files\ruby\lib下。
+因为`ruby`完全没有使用注册表，卸载的话，只要删除C:\Program Files\ruby即可。
 
 h4. MinGW
 
+如前所述，MinGW只是一个编译环境，它没有一般UNIX的一些工具，比如`sed`, `sh`。
+不过，构建`ruby`需要它们，因此，要从别的地方获得。有两种方法，Cygwin或者MSYS(Minimal SYStem)。
+
+不过，在本书出版之前，MSYS在构建中接连出现问题，因此，不是特别推荐。
+相对而言，使用Cygwin就可以顺利通过。因此，本书介绍的是使用Cygwin的方法。
+
+将Cygwin的setup.exe同MinGW及开发工具集放在一起。Cygwin和MinGW都在附赠的CD-ROM中。
+之后，在Cygwin的`bash`提示符下这样敲：
+
+<pre class="screen">
+~/src/ruby % ./configure --with-gcc='gcc -mno-cygwin' \
+                                 --enable-shared i386-mingw32
+~/src/ruby % make
+~/src/ruby % make install
+</pre>
+
+就是这样。虽然这里`configure`所在行换行了，但它实际是一行，反斜线其实并不需要。
+安装的位置是编译驱动器的\usr\local\下。这个部分比较麻烦，说明比较长，更多细节请参照附赠CD-ROM中的doc/build.html。
+
 h2. 构建详解
+
+到这里都是些类似于README的说明。这次要试着深入一下，看看具体做了些什么。
+然而，这里的内容可能需要部分高级知识。遇到不理解的地方，可以先跳到下面一节。读完全书之后再回来看，应该就可以理解了。
+
+无论什么平台，`ruby`的构建都可以分为3个阶段，即：`configure`, `make`, `make install`。
+这里抛开`make install`，对`configure`, `make`进行解说。
 
 h3. `configure`
 

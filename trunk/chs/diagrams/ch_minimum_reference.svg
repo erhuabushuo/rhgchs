@@ -12,9 +12,10 @@
    height="150"
    id="svg2607"
    sodipodi:version="0.32"
-   inkscape:version="0.45"
-   sodipodi:modified="true"
-   version="1.0">
+   inkscape:version="0.44.1"
+   version="1.0"
+   sodipodi:docname="ch_minimum_reference.svg"
+   sodipodi:docbase="E:\project\rhgchs\chs\diagrams">
   <defs
      id="defs2609">
     <marker
@@ -64,8 +65,8 @@
      height="150px"
      showguides="true"
      inkscape:guide-bbox="true"
-     inkscape:window-width="1024"
-     inkscape:window-height="712"
+     inkscape:window-width="1400"
+     inkscape:window-height="990"
      inkscape:window-x="-4"
      inkscape:window-y="-4">
     <sodipodi:guide
@@ -96,7 +97,7 @@
        rx="5.7973876"
        ry="5.7973933"
        y="100.34824"
-       x="29.452091"
+       x="41.452091"
        height="10.856071"
        width="22.029066"
        id="rect7524"
@@ -105,7 +106,7 @@
        rx="5.7973876"
        ry="5.7973933"
        y="59.892719"
-       x="29.452091"
+       x="41.452091"
        height="10.856071"
        width="22.029066"
        id="rect2616"
@@ -114,21 +115,21 @@
        rx="5.7973876"
        ry="5.7973933"
        y="22.04636"
-       x="29.452091"
+       x="41.452091"
        height="10.856071"
        width="22.029066"
        id="rect2618"
        style="fill:#e1f1f9;fill-opacity:1;stroke:#96cdea;stroke-width:0.8772307;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     <text
        xml:space="preserve"
-       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-       x="146.74124"
-       y="70.770889"
+       style="font-size:8px;font-style:normal;font-weight:normal;fill:black;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="148.74124"
+       y="68.770889"
        id="text2624"><tspan
          sodipodi:role="line"
          id="tspan2626"
-         x="146.74124"
-         y="70.770889">&quot;content&quot;</tspan></text>
+         x="148.74124"
+         y="68.770889">&quot;content&quot;</tspan></text>
     <path
        sodipodi:nodetypes="cc"
        id="path1606"
@@ -146,33 +147,33 @@
        style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:0.77796108;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Dot_m);marker-end:url(#Arrow2Mend);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     <text
        xml:space="preserve"
-       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-       x="36.722328"
-       y="31.808632"
+       style="font-size:8px;font-style:normal;font-weight:normal;fill:black;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="48.722328"
+       y="29.808632"
        id="text2660"><tspan
          sodipodi:role="line"
          id="tspan2662"
-         x="36.722328"
-         y="31.808632">A</tspan></text>
+         x="48.722328"
+         y="29.808632">A</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-       x="35.638344"
-       y="69.864845"
+       style="font-size:8px;font-style:normal;font-weight:normal;fill:black;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="49.638344"
+       y="67.864845"
        id="text2664"><tspan
          sodipodi:role="line"
          id="tspan2666"
-         x="35.638344"
-         y="69.864845">B</tspan></text>
+         x="49.638344"
+         y="67.864845">B</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-       x="36.14225"
-       y="110.26183"
+       style="font-size:8px;font-style:normal;font-weight:normal;fill:black;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="48.14225"
+       y="108.26183"
        id="text2668"><tspan
          sodipodi:role="line"
          id="tspan2670"
-         x="36.14225"
-         y="110.26183">C</tspan></text>
+         x="48.14225"
+         y="108.26183">C</tspan></text>
   </g>
 </svg>

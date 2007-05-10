@@ -153,6 +153,6 @@ h2. 网站
 
 http://i.loveruby.net/ja/rhg/
  
-h2. 谢辞 
+h2. 致谢
 
 略… 

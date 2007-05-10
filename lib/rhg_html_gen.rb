@@ -27,7 +27,7 @@ class RHGRedCloth < RedCloth
       fig_counter += 1
       stln,algn,atts,url,title,href,href_a1,href_a2 = $~[1..8]
       puts "Warning: the images used the the RHG should be PNGs, not JPEGs" if /\.jpe?g$/i.match(url)
-      "\n\np=. #{m.gsub(/`/, '')}<br>Figure #{fig_counter}: #{title}\n\n"
+      "\n\np=. #{m.gsub(/`/, '')}<br>图#{fig_counter}: #{title}\n\n"
     end
   end
   

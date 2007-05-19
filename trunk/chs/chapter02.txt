@@ -109,7 +109,7 @@ RARRAY(arr)->len;    /* ((struct RArray*)arr)->len */
 
 !images/ch_object_rbasic.png(`struct RBasic`)!
 
-你可能已经猜到了，`struct RBasic`的设计是为了包含由所有对象结构共享的一些重要信息的。`struct RBasic`的定义如下：
+你可能已经猜到了，`struct RBasic`的设计是为了包含由所有对象结构体共享的一些重要信息的。`struct RBasic`的定义如下：
 
 ▼ `struct RBasic`
 <pre class="longlist">
@@ -147,28 +147,28 @@ TYPE(str);             /* 返回值是T_STRING */
 h4. 关于结构体类型
 
 我说过，结构体类型存储在`struct Basic`的`flags`成员里。但是，为什么我们要存储结构体的类型呢？
-这样就可以通过 `VALUE`处理所有不同类型的结构。如果把结构指针转型为`VALUE`，类型信息无法保留，
-编译器无法提供任何帮助。因此我们不得不自己管理类型。这就是统一处理所有结构类型的结果。
+这样就可以通过 `VALUE`处理所有不同类型的结构。如果把结构体指针转型为`VALUE`，类型信息无法保留，
+编译器无法提供任何帮助。因此我们不得不自己管理类型。这就是统一处理所有结构体类型的结果。
 
-OK, 但是用到的结构已经由类定义了，那么为什么结构类型和类单独存储？
-能够从类中找到结构类型应该就够了。有两个原因不这么做。
+OK, 但是用到的结构体已经由类定义了，那么为什么结构体类型和类单独存储？
+能够从类中找到结构体类型应该就够了。有两个原因不这么做。
 
 第一个原因是(很抱歉，与我之前所说内容有些矛盾)，实际上，
-有的结构中不包含`struct RBasic`（也就是说，它们没有`klass`成员）。
-比如说，`struct RNode`，它会出现在本书的第二部分。	然而，即便是这样的特殊结构，
-`flags`也保证出现在起始成员的位置上。因此，如果你把结构的类型放在`flags`中，
-所有的对象结构就可以用统一的方式进行区分了。
+有的结构体中不包含`struct RBasic`（也就是说，它们没有`klass`成员）。
+比如说，`struct RNode`，它会出现在本书的第二部分。	然而，即便是这样的特殊结构体，
+`flags`也保证出现在起始成员的位置上。因此，如果你把结构体的类型放在`flags`中，
+所有的对象结构体就可以用统一的方式进行区分了。
 
 h4. `basic.flags`的使用
 
-正如要限制我自己说，`basic.flags`用于不同的东西——包括结构的类型——让我感觉很不好，
+正如要限制我自己说，`basic.flags`用于不同的东西——包括结构体的类型——让我感觉很不好，
 这是一个对它通用的阐述（图5）没有必要立刻理解所有的东西，我只是想展示一下它的使用，
 虽然它让我很烦心。
 
 !images/ch_object_flags.png(`flags`的使用)!
 
 图中可以看出，好像在32位机器上有21位没有使用。对于这些额外的位，`FL_USER0`到`FL_USER8`已经定义，
-用于每个结构的不同目的。作为例子，我在图中设置了`FL_USER0` (`FL_SINGLETON`) 。
+用于每个结构体的不同目的。作为例子，我在图中设置了`FL_USER0` (`FL_SINGLETON`) 。
 
 h3. 嵌在`VALUE`中的对象
 
@@ -187,7 +187,7 @@ h3. 嵌在`VALUE`中的对象
 h4. 小的整数
 
 因为在Ruby中，所有数据都是对象，所以，整数也是对象。然而，存在许多不同的整数实例，
-把它们表示为结构会冒减慢执行速度的的风险。比如说，从0递增到50000，仅仅如此就创建50000个对象，
+把它们表示为结构体会冒减慢执行速度的的风险。比如说，从0递增到50000，仅仅如此就创建50000个对象，
 这让我们感到犹豫。
 
 这就是为什么在`ruby`中——某种程度上——小的整数要特殊对待，直接嵌入到`VALUE`中。
@@ -210,7 +210,7 @@ h4. 小的整数
 | `0110100001000` | 转换前 |
 | `1101000010001` | 转换后 |
 
-也就是说作为`VALUE`的`Fixnum`总是一个奇数。另一方面，因为Ruby对象结构是以`malloc()`分配，
+也就是说作为`VALUE`的`Fixnum`总是一个奇数。另一方面，因为Ruby对象结构体是以`malloc()`分配，
 它们通常是安排在4的倍数的地址上，因此它们不会与作为`VALUE`的`Fixnum`的值重叠。
 
 另外，为了将`int`或`long`转换为`VALUE`，我们可以使用宏，比如，`INT2NUM()`或`LONG2NUM()`。
@@ -334,14 +334,14 @@ h4. `Qundef`
 h2. 方法
 
 我已经总结过Ruby对象的三个重点：拥有标识，能够调用方法，持有每个实例的数据。
-在本节中，我会以简单的方式解释一下同对象和方法相连的结构。
+在本节中，我会以简单的方式解释一下同对象和方法相连的结构体。
 
 h3. `struct RClass`
 
-在Ruby中，执行期间类以对象的方式存在。当然，必须有一个类对象的结构。这个结构就是`struct RClass`。
-它的结构类型标志是`T_CLASS`。
+在Ruby中，执行期间类以对象的方式存在。当然，必须有一个类对象的结构体。这个结构体就是`struct RClass`。
+它的结构体类型标志是`T_CLASS`。
 
-因为类和模块极其相似，没有必要区分它们的内容。因此，模块也使用`struct RClass`结构，通过`T_MODULE`结构标志进行区分。
+因为类和模块极其相似，没有必要区分它们的内容。因此，模块也使用`struct RClass`结构体，通过`T_MODULE`结构体标志进行区分。
 
 ▼ `struct RClass`
 <pre class="longlist">
@@ -366,14 +366,14 @@ h3. `struct RClass`
 也许看上去拥有`super`好像有问题，但是在`ruby`中，做了一些聪明的变化，使它看上去像个单继承。
 这个过程将在第四章《类和模块》中详细解释。
 
-因为如此，`Object`结构的`super`指向`Kernel`对象的`struct RClass`。只有`Kernel`的`super`才是NULL。
+因为如此，`Object`结构体的`super`指向`Kernel`对象的`struct RClass`。只有`Kernel`的`super`才是NULL。
 因此，与我说过的矛盾，如果 `super`是NULL，这个`RClass`是`Kernel`对象（图6）。
 
 !images/ch_object_classtree.png(C层次的类树)!
 
 h3. 方法搜索
 
-了解类结构，你就可以轻松想出方法调用过程。搜索对象类的`m_tbl`，如果方法没有找到，就搜索`super`的`m_tbl`，等等。
+了解类结构体，你就可以轻松想出方法调用过程。搜索对象类的`m_tbl`，如果方法没有找到，就搜索`super`的`m_tbl`，等等。
 如果不再有`super`，也就是说甚至在`Object`中都没有找到，那么一定是方法没有定义。
 
 在`m_tbl`中进行顺序搜索过程由`search_method()`完成。
@@ -420,7 +420,7 @@ h2. 实例变量
 
 h3. `rb_ivar_set()`
 
-实例变量允许每个对象存储它特有的数据。把它存储在对象本身（也就是对象结构中）看上去不错，
+实例变量允许每个对象存储它特有的数据。把它存储在对象本身（也就是对象结构体中）看上去不错，
 但是实际如何呢？让我们看一下函数`rb_ivar_set()`，它将对象放入实例变量中。
 
 ▼ `rb_ivar_set()`
@@ -467,14 +467,14 @@ switch (TYPE(obj)) {
 }
 </pre>
 
-形式是`ruby`特色。`TYPE()`是一个宏，返回对象的结构的类型标志（`T_OBJECT`，`T_STRING`，等等）。
-换句话说，因为类型标志是一个整形常量，我们可以用一个`switch`依赖它进行分支处理。`Fixnum`和`Symbol`没有结构，
+形式是`ruby`特色。`TYPE()`是一个宏，返回对象的结构体的类型标志（`T_OBJECT`，`T_STRING`，等等）。
+换句话说，因为类型标志是一个整形常量，我们可以用一个`switch`依赖它进行分支处理。`Fixnum`和`Symbol`没有结构体，
 但是在`TYPE()`内部，做了特殊处理，可以恰当的返回`T_FIXNUM`和`T_SYMBOL`，因此没有必要担心。
 
 好了，让我们返回`rb_ivar_set()`。好像只是对`T_OBJECT`，`T_CLASS`和`T_MODULE`处理不同。
 选中它们3个是因为它们的第二个参数是`iv_tbl`。让我们实际确认一下。
 
-▼ 第二个成员为`iv_tbl`的结构：
+▼ 第二个成员为`iv_tbl`的结构体：
 <pre class="longlist">
       /* TYPE(val) == T_OBJECT */
  295  struct RObject {
@@ -495,7 +495,7 @@ switch (TYPE(obj)) {
 
 `iv_tbl`是一个实例变量表（Instance Variable TaBLe）。它存储着实例变量及其对应的值。
 
-在`rb_ivar_set()`中，让我们在看一下有`iv_tbl`的结构的代码。
+在`rb_ivar_set()`中，让我们在看一下有`iv_tbl`的结构体的代码。
 
 <pre class="emlist">
 if (!ROBJECT(obj)->iv_tbl)
@@ -521,7 +521,7 @@ end
 
 h3. `generic_ivar_set()`
 
-对于结构不是`T_OBJECT`，`T_MODULE`或`T_CLASS`的对象而言，修改实例变量会发生什么呢？
+对于结构体不是`T_OBJECT`，`T_MODULE`或`T_CLASS`的对象而言，修改实例变量会发生什么呢？
 
 ▼ `rb_ivar_set()`：没有`iv_tbl`情况
 <pre class="longlist">
@@ -534,7 +534,7 @@ h3. `generic_ivar_set()`
 
 控制交给了`generic_ivar_set()`。在看这个函数之前，让我们先解释其通用的想法。
 
-非`T_OBJECT`，`T_MODULE`或`T_CLASS`的结构没有`iv_tbl`成员（为何没有，稍后解释）。
+非`T_OBJECT`，`T_MODULE`或`T_CLASS`的结构体没有`iv_tbl`成员（为何没有，稍后解释）。
 然而，将实例同`struct st_table`连接起来的方法允许实例拥有实例变量。在`ruby`中，通过使用全局`st_table`解决这个问题。
 `generic_iv_table`（图7）就是为这种关联准备的。
 
@@ -606,12 +606,12 @@ h3. 结构中的缺口
 
 好的，可以这么做，但是有一些很好的理由不这么做。实际上，这个问题同`ruby`管理对象的方式紧密相连。
 
-在`ruby`中，内存——比如字符串数据（char[]）用到的——可以直接使用`malloc()`分配。然而，对象结构要以一种特殊的方式进行处理。
-`ruby`以簇进行分配，然后从这些簇中将它们分配出来。因为在分配时结构的类型（和大小）差异难于处理，所以，声明了一个组合了所有结构的类型（`union`）`RVALUE`，
-管理的是这个类型的数组。因为这个类型的大小等于其成员的最大一个，如果只要有一个大的结构，就会有很多未用的空间。
-这就是为什么要尽可能把结构重新组织为类似大小。`RVALUE`的细节会在第五章《垃圾搜集》中解释。
+在`ruby`中，内存——比如字符串数据（char[]）用到的——可以直接使用`malloc()`分配。然而，对象结构体要以一种特殊的方式进行处理。
+`ruby`以簇进行分配，然后从这些簇中将它们分配出来。因为在分配时结构体的类型（和大小）差异难于处理，所以，声明了一个组合了所有结构体的类型（`union`）`RVALUE`，
+管理的是这个类型的数组。因为这个类型的大小等于其成员的最大一个，如果只要有一个大的结构体，就会有很多未用的空间。
+这就是为什么要尽可能把结构体重新组织为类似大小。`RVALUE`的细节会在第五章《垃圾搜集》中解释。
 
-通常，用的最多的结构是`struct RString`。之后，在程序中，是`struct RArray` （数组），`RHash` （hash），
+通常，用的最多的结构体是`struct RString`。之后，在程序中，是`struct RArray` （数组），`RHash` （hash），
 `RObject` （用户定义对象）等等。然而，这个`struct RObject`只使用`struct RBasic` + 1个指针的空间。另一方面，
 `struct RString`，`RArray`和`RHash`占用`struct RBasic` + 3个指针的空间。换句话说，
 当把`struct RObject`放入共享实体中，两个指针的空间没有用到。此外，如果`RString`有4个指针，
@@ -621,7 +621,7 @@ h3. 结构中的缺口
 之前并没有`generic_iv_tbl`，因此，那时不可能在`String`或`Array`中使用实例变量。然而，这并不是什么问题。
 只是为了功能让大量内存处于无用状态看上去有些愚蠢。
 
-如果你把这些都考虑了，你就可以推断，增加对象结构的大小不会有任何好处。
+如果你把这些都考虑了，你就可以推断，增加对象结构体的大小不会有任何好处。
 
 h3. `rb_ivar_get()`
 
@@ -668,22 +668,22 @@ h3. `rb_ivar_get()`
 （C）如果没有对应，换句话说，如果我们读一个没有设置的实例变量，我们先离开`if`，然后是`switch`。
 `rb_warning()`提出警告，返回`nil`。这是因为在Ruby中你可以读取未设置的实例变量。
 
-（B）另一方面，如果结构既不是`struct RObject`也不是`RClass`，在`generic_iv_tbl`中，搜索实例变量表。
+（B）另一方面，如果结构体既不是`struct RObject`也不是`RClass`，在`generic_iv_tbl`中，搜索实例变量表。
 `generic_ivar_get()`做什么应该可以很容易猜出来，因此我就不解释它了。我更愿意让你关注`if`。
 
 我已经告诉你了，`generic_ivar_set()`设置`FL_EXIVAR`标志可以让检查更快。
 
-`rb_special_const_p()`是什么呢？当其参数`obj`不指向结构时，这个函数返回true。
-因为没有结构意味着没有`basic.flags`，没有可以设置的标志，`FL_xxxx()`总会返回false。
+`rb_special_const_p()`是什么呢？当其参数`obj`不指向结构体时，这个函数返回true。
+因为没有结构体意味着没有`basic.flags`，没有可以设置的标志，`FL_xxxx()`总会返回false。
 所以，这些对象需要特殊对待。
 
-h2. 对象的结构
+h2. 对象的结构体
 
-在本节中，我们会简单看一下对象结构中几个重要的结构的内容及其处理。
+在本节中，我们会简单看一下对象结构体中几个重要的结构体的内容及其处理。
 
 h3. `struct RString`
 
-`struct RString`是`String`及其子类实例的结构。
+`struct RString`是`String`及其子类实例的结构体。
 
 ▼ `struct RString`
 <pre class="longlist">
@@ -732,7 +732,7 @@ p(s)             # 显示这个字符串
 每当字符串变化就`realloc()`会是一个沉重的负担。
 
 这就是为什么`ptr`指向的内存大小要略大于`len`。因为如此，如果添加的部分如何能放到剩余的内存中，
-无需调用`realloc()`便能得到处理，这会更快一些。结构成员`aux.capa`是一个长度，它包括额外的内存。
+无需调用`realloc()`便能得到处理，这会更快一些。结构体成员`aux.capa`是一个长度，它包括额外的内存。
 
 那么另一个`aux.shared`是什么？它用以加速文本字符串的创建。看看下面的Ruby程序。
 
@@ -749,7 +749,7 @@ end
 
 这个技巧运用的根源就在`aux.shared`。以文本常量创建的字符串会使用一个共享的`char[]`。当发生变化时，
 将字符串复制到一个非共享的内存中，变化针对对这个新拷贝进行。这一技术成为“写时拷贝”。当使用共享`char[]`时，
-对象结构的`basic.flags`设置为`ELTS_SHARED`，`aux.shared`包含原有的对象。`ELTS`好像是`ELemenTS`的缩写。
+对象结构体的`basic.flags`设置为`ELTS_SHARED`，`aux.shared`包含原有的对象。`ELTS`好像是`ELemenTS`的缩写。
 
 好的，但是，让我们回到`RSTRING(str)-&gt;ptr`的话题上。即便可以访问指针，你也不该修改它，首先，
 这会导致`len`或`capa`的值会与内容不一致，再有，当修改的字符串是通过文本常量创建的话，`aux.shared`需要分离出来。
@@ -768,7 +768,7 @@ rb_str_cat2(str, "end");         /* 连接C字符串到Ruby字符串上 */
 
 h3. `struct RArray`
 
-`struct RArray`是Ruby数组类`Array`的结构。
+`struct RArray`是Ruby数组类`Array`的结构体。
 
 ▼ `struct RArray`
 <pre class="longlist">
@@ -785,11 +785,11 @@ h3. `struct RArray`
 (ruby.h)
 </pre>
 
-除了`ptr`的类型，这个结构几乎等同于`struct RString`。`ptr`指向数组的内容，`len`是其长度。
+除了`ptr`的类型，这个结构体几乎等同于`struct RString`。`ptr`指向数组的内容，`len`是其长度。
 `aux`的用途等同于`struct RString`。`aux.capa`是`ptr`所指向内存的真正长度。
 如果`ptr`是共享的，`aux.shared`存储着共享的原数组对象。
 
-从这个结构可以清楚的看出，Ruby的`Array`是一个数组，而非列表。因此，当元素数目发生很大变化时，必须进行`realloc()`。
+从这个结构体可以清楚的看出，Ruby的`Array`是一个数组，而非列表。因此，当元素数目发生很大变化时，必须进行`realloc()`。
 如果元素需要插入到其它的地方，而非尾端，就要用到`memmove()`。但是如果我们这么做了，即便它移动得也很快，在当前的机器上，
 它依然会给人留下深刻的印象。
 
@@ -813,7 +813,7 @@ p(ary[0])     # 对ary[0]做p （结果是9）
 
 h3. `struct RRegexp`
 
-它是正则表达式类`Regexp`实例的结构。
+它是正则表达式类`Regexp`实例的结构体。
 
 ▼ `struct RRegexp`
 <pre class="longlist">
@@ -834,7 +834,7 @@ h3. `struct RRegexp`
 
 h3. `struct RHash`
 
-`struct RHash`是Ruby中`Hash`对象的结构。
+`struct RHash`是Ruby中`Hash`对象的结构体。
 
 ▼ `struct RHash`
 <pre class="longlist">
@@ -854,7 +854,7 @@ h3. `struct RHash`
 
 h3. `struct RFile`
 
-`struct RFile`是内建的IO类及其子类实例的结构。
+`struct RFile`是内建的IO类及其子类实例的结构体。
 
 ▼ `struct RFile`
 <pre class="longlist">
@@ -886,10 +886,10 @@ h3. `struct RFile`
 
 h3. `struct RData`
 
-`struct RData`同我们之前所见有着不同的思路。它是扩展库实现的结构。
+`struct RData`同我们之前所见有着不同的思路。它是扩展库实现的结构体。
 
-当然，创建扩展库类的结构是必需的，但是这些结构的类型依赖于已创建的类，不可能预先知道它们的大小或结构。
-所以要在`ruby`端创建一个“管理用户自定义结构指针的结构”，以实现管理。这个结构就是`struct RData`。
+当然，创建扩展库类的结构体是必需的，但是这些结构体的类型依赖于已创建的类，不可能预先知道它们的大小或结构体。
+所以要在`ruby`端创建一个“管理用户自定义结构体指针的结构体”，以实现管理。这个结构体就是`struct RData`。
 
 ▼ `struct RData`
 <pre class="longlist">
@@ -903,7 +903,7 @@ h3. `struct RData`
 (ruby.h)
 </pre>
 
-`data`是一个指向用户自定义结构的指针，`dfree`是用以释放这个结构的函数，`dmark`也是一个函数，当发生标记和清除的“标记”时调用。
+`data`是一个指向用户自定义结构体的指针，`dfree`是用以释放这个结构体的函数，`dmark`也是一个函数，当发生标记和清除的“标记”时调用。
 
 现在解释`struct RData`依然太复杂，我们暂时只是看看它的表示（图8）。在第五章《垃圾回收》中会再谈到它，
 在那你会读到更多关于其成员详细的解释。

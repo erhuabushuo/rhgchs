@@ -598,7 +598,7 @@ h3. `generic_ivar_set()`
 这样设置这些标志可以加速读实例变量的过程。如果没有设置`FL_EXIVAR`，即便不搜索`generic_iv_tbl`，
 我们也直接知道是否对象拥有实例变量。当然，位检查是比搜索`struct st_table`要快。
 
-h3. 结构中的缺口
+h3. 结构体中的缺口
 
 现在，你该理解了实例变量是如何存储的，但是为什么有些没有`iv_tbl`？
 为什么`struct RString`或`struct RArray`中没有`iv_tbl`呢？

@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="240"
+   height="100"
+   id="svg1329"
+   sodipodi:version="0.32"
+   inkscape:version="0.45pre1"
+   sodipodi:docbase="C:\downloads\rhgchs\chs\diagrams"
+   sodipodi:docname="Copy of ch_object_classtree.svg"
+   inkscape:export-filename="/d/pr/rhg/rhg/images/ch_class_metaobj.jpg"
+   inkscape:export-xdpi="180.00000"
+   inkscape:export-ydpi="180.00000"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   version="1.0"
+   sodipodi:modified="true">
+  <defs
+     id="defs1331">
+    <marker
+       inkscape:stockid="Arrow2Lend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow2Lend"
+       style="overflow:visible">
+      <path
+         id="path3398"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.97309,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="TriangleOutL"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="TriangleOutL"
+       style="overflow:visible">
+      <path
+         id="path4338"
+         d="M 5.77,0 L -2.88,5 L -2.88,-5 L 5.77,0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="scale(0.8,0.8)" />
+    </marker>
+    <marker
+       inkscape:stockid="TriangleOutM"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="TriangleOutM"
+       style="overflow:visible">
+      <path
+         id="path4335"
+         d="M 5.77,0 L -2.88,5 L -2.88,-5 L 5.77,0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="scale(0.4,0.4)" />
+    </marker>
+    <marker
+       inkscape:stockid="Dot_s"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Dot_s"
+       style="overflow:visible">
+      <path
+         id="path4368"
+         d="M -2.5,-1 C -2.5,1.76 -4.74,4 -7.5,4 C -10.26,4 -12.5,1.76 -12.5,-1 C -12.5,-3.76 -10.26,-6 -7.5,-6 C -4.74,-6 -2.5,-3.76 -2.5,-1 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none;marker-end:none"
+         transform="matrix(0.2,0,0,0.2,1.48,0.2)" />
+    </marker>
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient3179">
+      <stop
+         style="stop-color:#3672e4;stop-opacity:1;"
+         offset="0"
+         id="stop3181" />
+      <stop
+         style="stop-color:#3672e4;stop-opacity:0;"
+         offset="1"
+         id="stop3183" />
+    </linearGradient>
+    <marker
+       inkscape:stockid="Arrow2Mend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow2Mend"
+       style="overflow:visible">
+      <path
+         sodipodi:nodetypes="cccc"
+         id="path7292"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.97309,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="matrix(-0.6,0,0,-0.6,3,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Dot_m"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Dot_m"
+       style="overflow:visible">
+      <path
+         id="path39"
+         d="M -2.5,-1 C -2.5,1.76 -4.74,4 -7.5,4 C -10.26,4 -12.5,1.76 -12.5,-1 C -12.5,-3.76 -10.26,-6 -7.5,-6 C -4.74,-6 -2.5,-3.76 -2.5,-1 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none;marker-end:none"
+         transform="matrix(0.4,0,0,0.4,2.8501972,0.4)" />
+    </marker>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3179"
+       id="linearGradient2237"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(1.2536555,0,0,2.0193336,264.30037,-248.46408)"
+       x1="-112.0386"
+       y1="146.29657"
+       x2="-34.355812"
+       y2="146.29657" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="2.2951696"
+     inkscape:cx="134.7493"
+     inkscape:cy="113.26985"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:window-width="1440"
+     inkscape:window-height="846"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4"
+     height="100px"
+     width="240px">
+    <sodipodi:guide
+       orientation="horizontal"
+       position="322.25665"
+       id="guide1836" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata1334">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:url(#linearGradient2237);fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1.59108412;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:11.30000019;stroke-dasharray:none;stroke-opacity:1"
+       id="rect2206"
+       width="96.133797"
+       height="74.784615"
+       x="124.46936"
+       y="9.5651894"
+       rx="2.016418" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="129.40221"
+       y="23.211979"
+       id="text3198"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan2239"
+         x="129.40221"
+         y="23.211979">st_table</tspan></text>
+    <rect
+       style="fill:#ffffff;fill-opacity:0.67058824;fill-rule:nonzero;stroke:#000000;stroke-width:1.05409336;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:11.30000019;stroke-dasharray:none;stroke-opacity:1"
+       id="rect2243"
+       width="84.471252"
+       height="12.145441"
+       x="9.394558"
+       y="43.98415"
+       rx="4.4129024"
+       ry="3.4534698" />
+    <g
+       id="g3490"
+       transform="translate(-152.05847,-41.134067)">
+      <g
+         transform="translate(-15.031554,-96.289181)"
+         id="g3433">
+        <rect
+           style="fill:#ffffff;fill-opacity:0.67058824;fill-rule:nonzero;stroke:#000000;stroke-width:0.98695236;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:11.30000019;stroke-dasharray:none;stroke-opacity:1"
+           id="rect2241"
+           width="73.64595"
+           height="12.212582"
+           x="305.85321"
+           y="167.25301"
+           rx="0" />
+        <g
+           id="g3426"
+           transform="matrix(0.7557978,0,0,0.686414,86.589974,52.206782)">
+          <text
+             id="text2249"
+             y="179.31154"
+             x="341.58698"
+             style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+             xml:space="preserve"><tspan
+               y="179.31154"
+               x="341.58698"
+               id="tspan2251"
+               sodipodi:role="line">st_table</tspan></text>
+          <text
+             id="text2253"
+             y="179.24123"
+             x="291.73892"
+             style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+             xml:space="preserve"><tspan
+               y="179.24123"
+               x="291.73892"
+               id="tspan2255"
+               sodipodi:role="line">object</tspan></text>
+          <path
+             inkscape:connector-type="polyline"
+             id="path2257"
+             d="M 327.71098,176.21848 L 338.94573,176.21848"
+             style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.53841436px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Dot_s);marker-end:url(#Arrow2Lend);stroke-opacity:1" />
+        </g>
+      </g>
+      <g
+         transform="translate(-15.031554,-84.525336)"
+         id="g3442">
+        <rect
+           style="fill:#ffffff;fill-opacity:0.67058824;fill-rule:nonzero;stroke:#000000;stroke-width:0.98695236;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:11.30000019;stroke-dasharray:none;stroke-opacity:1"
+           id="rect3444"
+           width="73.64595"
+           height="12.212582"
+           x="305.85321"
+           y="167.25301"
+           rx="0" />
+        <g
+           id="g3446"
+           transform="matrix(0.7557978,0,0,0.686414,86.589974,52.206782)">
+          <text
+             id="text3448"
+             y="179.31154"
+             x="341.58698"
+             style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+             xml:space="preserve"><tspan
+               y="179.31154"
+               x="341.58698"
+               id="tspan3450"
+               sodipodi:role="line">st_table</tspan></text>
+          <text
+             id="text3452"
+             y="179.24123"
+             x="291.73892"
+             style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+             xml:space="preserve"><tspan
+               y="179.24123"
+               x="291.73892"
+               id="tspan3454"
+               sodipodi:role="line">object</tspan></text>
+          <path
+             inkscape:connector-type="polyline"
+             id="path3456"
+             d="M 327.71098,176.21848 L 338.94573,176.21848"
+             style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.53841436px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Dot_s);marker-end:url(#Arrow2Lend);stroke-opacity:1" />
+        </g>
+      </g>
+      <g
+         transform="translate(-15.031554,-71.890103)"
+         id="g3458">
+        <rect
+           style="fill:#ffffff;fill-opacity:0.67058824;fill-rule:nonzero;stroke:#000000;stroke-width:0.98695236;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:11.30000019;stroke-dasharray:none;stroke-opacity:1"
+           id="rect3460"
+           width="73.64595"
+           height="12.212582"
+           x="305.85321"
+           y="167.25301"
+           rx="0" />
+        <g
+           id="g3462"
+           transform="matrix(0.7557978,0,0,0.686414,86.589974,52.206782)">
+          <text
+             id="text3464"
+             y="179.31154"
+             x="341.58698"
+             style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+             xml:space="preserve"><tspan
+               y="179.31154"
+               x="341.58698"
+               id="tspan3466"
+               sodipodi:role="line">st_table</tspan></text>
+          <text
+             id="text3468"
+             y="179.24123"
+             x="291.73892"
+             style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+             xml:space="preserve"><tspan
+               y="179.24123"
+               x="291.73892"
+               id="tspan3470"
+               sodipodi:role="line">object</tspan></text>
+          <path
+             inkscape:connector-type="polyline"
+             id="path3472"
+             d="M 327.71098,176.21848 L 338.94573,176.21848"
+             style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.53841436px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Dot_s);marker-end:url(#Arrow2Lend);stroke-opacity:1" />
+        </g>
+      </g>
+      <g
+         transform="translate(-15.031554,-60.126267)"
+         id="g3474">
+        <rect
+           style="fill:#ffffff;fill-opacity:0.67058824;fill-rule:nonzero;stroke:#000000;stroke-width:0.98695236;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:11.30000019;stroke-dasharray:none;stroke-opacity:1"
+           id="rect3476"
+           width="73.64595"
+           height="12.212582"
+           x="305.85321"
+           y="167.25301"
+           rx="0" />
+        <g
+           id="g3478"
+           transform="matrix(0.7557978,0,0,0.686414,86.589974,52.206782)">
+          <text
+             id="text3480"
+             y="179.31154"
+             x="341.58698"
+             style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+             xml:space="preserve"><tspan
+               y="179.31154"
+               x="341.58698"
+               id="tspan3482"
+               sodipodi:role="line">st_table</tspan></text>
+          <text
+             id="text3484"
+             y="179.24123"
+             x="291.73892"
+             style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+             xml:space="preserve"><tspan
+               y="179.24123"
+               x="291.73892"
+               id="tspan3486"
+               sodipodi:role="line">object</tspan></text>
+          <path
+             inkscape:connector-type="polyline"
+             id="path3488"
+             d="M 327.71098,176.21848 L 338.94573,176.21848"
+             style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.53841436px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Dot_s);marker-end:url(#Arrow2Lend);stroke-opacity:1" />
+        </g>
+      </g>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:9.72698021px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="9.5066032"
+       y="55.529156"
+       id="text3524"
+       transform="scale(1.0598464,0.9435329)"><tspan
+         sodipodi:role="line"
+         id="tspan3526"
+         x="9.5066032"
+         y="55.529156">generic_iv_table</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.89757448px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Dot_m);marker-end:url(#TriangleOutM);stroke-opacity:1"
+       d="M 89.421873,50.293232 L 120.89395,50.705632"
+       id="path3528"
+       inkscape:connector-type="polyline" />
+  </g>
+</svg>

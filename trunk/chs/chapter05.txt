@@ -51,7 +51,7 @@ h3. `alloca()`
 下一次调用`alloca()`的时候，检查这个列表，
 那些分配给已经结束的函数的内存使用`free()`释放就可以了（图2）。
 
-!images/ch_gc_calloca.png(C实现alloca()的动作)!
+!images/ch_gc_calloca.png(C实现alloca的动作)!
 
 `ruby`的`missing/alloca.c`是一个模拟版`alloca()`实现的例子。
 

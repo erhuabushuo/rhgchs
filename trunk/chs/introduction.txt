@@ -705,7 +705,7 @@ h3. `autoconf`
 
 图1显示了迄今为止的过程。
 
-!images/ch_intro_autoconf.png(直至Makefile完成)!
+!images/ch_abstract_build.png(直至Makefile完成)!
 
 对于希望进一步了解的读者，推荐《GNU Autoconf/Automake/Libtool》。
 
@@ -754,17 +754,17 @@ CVS中最重要的概念是repository和working copy。之前说过，CVS类似�
 另一方面，从repository选择的某个点取出的文件叫做working copy。
 repository只有一个，而working copy可以有很多。（图2）
 
-!images/ch_intro_repositoryandworkingcopy.png(repository和working copy)!
+!images/ch_abstract_repo.png(repository和working copy)!
 
 想修改源码时，先取出一个working copy，用编辑器编辑之后，再“返还”到repository。
-随即变更就会记录在repository中。从repository取出working copy叫做检出（checkout），
-返还到repository叫做检入（checkin）或提交（commit）。检入时repository会记录变更，
+随即变更就会记录在repository中。从repository取出working copy叫做checkout，
+返还到repository叫做checkin或commit。检入时repository会记录变更，
 这样，无论何时都可以取出。
 
-!images/ch_intro_checkinandcheckout.png(检入和检出)!
+!images/ch_abstract_ci.png(checkin和checkout)!
 
 CVS的最大特征就是跨越网络访问CVS repository。也就是说，只要有一个维护repository的服务器，
-每个人在任何地方都可以通过互联网进行检入检出。然而通常检入会受到访问限制，而并不是无限制的。
+每个人在任何地方都可以通过互联网进行检入检出。然而，通常checkin会受到访问限制，而不是无限制的。
 
 h4. 修订版
 
@@ -976,7 +976,7 @@ h4. 解析器（parser）
 所谓内部结构具体来说就是“语法树”。语法树就是将程序表现为树的结构。
 比如，`if`语句就会表现为图4这样。
 
-!images/ch_intro_ifstatement.png(if语句，及其对应的语法树)!
+!images/ch_abstract_syntree.png(if语句，及其对应的语法树)!
 
 在第二部分“语法分析”中，会对解析器进行解释。第二部分从第10章到第12章。
 解释的对象只有一个文件：`parse.y`。

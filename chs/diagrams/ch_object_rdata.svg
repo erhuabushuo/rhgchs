@@ -13,15 +13,14 @@
    height="75"
    id="svg1329"
    sodipodi:version="0.32"
-   inkscape:version="0.45pre1"
-   sodipodi:docbase="C:\downloads\rhgchs\chs\diagrams"
+   inkscape:version="0.45.1"
+   sodipodi:docbase="/home/dreamhead/workspace/rhgchs/chs/diagrams"
    sodipodi:docname="ch_object_rdata.svg"
    inkscape:export-filename="/d/pr/rhg/rhg/images/ch_class_metaobj.jpg"
    inkscape:export-xdpi="180.00000"
    inkscape:export-ydpi="180.00000"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
-   version="1.0"
-   sodipodi:modified="true">
+   version="1.0">
   <defs
      id="defs1331">
     <marker
@@ -167,13 +166,13 @@
      inkscape:cx="134.7493"
      inkscape:cy="89.051861"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g2336"
      showguides="true"
      inkscape:guide-bbox="true"
-     inkscape:window-width="1440"
-     inkscape:window-height="846"
+     inkscape:window-width="1434"
+     inkscape:window-height="827"
      inkscape:window-x="0"
-     inkscape:window-y="24"
+     inkscape:window-y="25"
      height="75px"
      width="255px">
     <sodipodi:guide
@@ -207,16 +206,16 @@
        ry="3.5616815" />
     <text
        xml:space="preserve"
-       style="font-size:9.72698021px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-       x="7.2827048"
-       y="43.250462"
+       style="font-size:9.33100891px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="7.6158423"
+       y="41.489799"
        id="text3524"
-       transform="scale(1.0598464,0.9435329)"
+       transform="scale(1.0167016,0.9835727)"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan2214"
-         x="7.2827048"
-         y="43.250462">value</tspan></text>
+         x="7.6158423"
+         y="41.489799">value</tspan></text>
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.89757448px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Dot_m);marker-end:url(#Arrow2Lend);stroke-opacity:1"
        d="M 36.26676,38.529397 L 67.73884,38.941797"
@@ -254,19 +253,19 @@
          style="fill:#ffffff;fill-opacity:0.67058824;fill-rule:nonzero;stroke:#000000;stroke-width:0.81250751;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:11.30000019;stroke-dasharray:none;stroke-opacity:1" />
       <text
          sodipodi:linespacing="100%"
-         transform="scale(1.0649802,0.9389846)"
+         transform="scale(1.1220498,0.8912261)"
          id="text2340"
-         y="86.344391"
-         x="162.44241"
-         style="font-size:10.55397892px;font-style:normal;font-weight:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         y="92.089333"
+         x="154.18028"
+         style="font-size:10.0171833px;font-style:normal;font-weight:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
          xml:space="preserve"><tspan
-           y="86.344391"
-           x="162.44241"
+           y="92.089333"
+           x="154.18028"
            id="tspan2342"
            sodipodi:role="line">basic</tspan><tspan
            id="tspan2344"
-           y="96.89837"
-           x="162.44241"
+           y="102.10652"
+           x="154.18028"
            sodipodi:role="line">data</tspan></text>
     </g>
     <rect
@@ -279,16 +278,16 @@
        rx="1.3960532" />
     <text
        xml:space="preserve"
-       style="font-size:11.58615971px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-       x="190.45769"
-       y="48.174065"
+       style="font-size:10.9954052px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="200.75624"
+       y="45.717766"
        id="text2350"
        sodipodi:linespacing="125%"
-       transform="scale(0.9655133,1.0357185)"><tspan
+       transform="scale(0.9162837,1.091365)"><tspan
          sodipodi:role="line"
          id="tspan4306"
-         x="190.45769"
-         y="48.174065">struct XXXX</tspan></text>
+         x="200.75624"
+         y="45.717766">struct XXXX</tspan></text>
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.99462157px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Dot_m);marker-end:url(#Arrow2Lend);stroke-opacity:1"
        d="M 141.51983,48.392673 L 180.61413,48.80034"

@@ -13,14 +13,13 @@
    height="100"
    id="svg1329"
    sodipodi:version="0.32"
-   inkscape:version="0.45pre1"
-   sodipodi:docbase="C:\downloads\rhgchs\chs\diagrams"
-   sodipodi:docname="Copy of ch_class_symbolic.svg"
+   inkscape:version="0.45.1"
+   sodipodi:docbase="/home/dreamhead/workspace/rhgchs/chs/diagrams"
+   sodipodi:docname="ch_object_rbasic.svg"
    inkscape:export-filename="/d/pr/rhg/rhg/images/ch_class_symbolic.jpg"
    inkscape:export-xdpi="180.00000"
    inkscape:export-ydpi="180.00000"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
-   sodipodi:modified="true"
    version="1.0">
   <defs
      id="defs1331">
@@ -241,13 +240,13 @@
      inkscape:cx="144.38993"
      inkscape:cy="61.336649"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g2407"
      showguides="true"
      inkscape:guide-bbox="true"
-     inkscape:window-width="1440"
-     inkscape:window-height="846"
-     inkscape:window-x="-4"
-     inkscape:window-y="-4"
+     inkscape:window-width="1434"
+     inkscape:window-height="827"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
      width="300px"
      height="100px">
     <sodipodi:guide
@@ -324,14 +323,14 @@
          style="color:#000000;fill:#79aae5;fill-opacity:1;fill-rule:nonzero;stroke:#0b71af;stroke-width:0.88512164;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible" />
       <text
          sodipodi:linespacing="125%"
-         transform="scale(1.0127988,0.9873629)"
+         transform="scale(0.9528825,1.0494474)"
          id="text3773"
-         y="36.992416"
-         x="227.02307"
-         style="font-size:10.68073463px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         y="34.803974"
+         x="241.36871"
+         style="font-size:10.04887104px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
          xml:space="preserve"><tspan
-           y="36.992416"
-           x="227.02307"
+           y="34.803974"
+           x="241.36871"
            id="tspan2284"
            sodipodi:role="line">struct RBasic</tspan></text>
       <text
@@ -370,16 +369,16 @@
     </g>
     <text
        xml:space="preserve"
-       style="font-size:10.68073463px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-       x="226.37108"
-       y="20.532883"
+       style="font-size:9.92748356px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="243.63181"
+       y="19.084816"
        id="text2292"
-       transform="scale(1.0127988,0.9873629)"
+       transform="scale(0.9413719,1.0622794)"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan2298"
-         x="226.37108"
-         y="20.532883">struct RArray</tspan></text>
+         x="243.63181"
+         y="19.084816">struct RArray</tspan></text>
     <g
        id="g2407"
        transform="translate(0,-0.859888)">
@@ -406,14 +405,14 @@
          style="color:#000000;fill:#79aae5;fill-opacity:1;fill-rule:nonzero;stroke:#0b71af;stroke-width:0.88512164;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible" />
       <text
          sodipodi:linespacing="125%"
-         transform="scale(1.0127988,0.9873629)"
+         transform="scale(0.9528825,1.0494474)"
          id="text2308"
-         y="36.829029"
-         x="150.21344"
-         style="font-size:10.68073463px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         y="34.650253"
+         x="159.72937"
+         style="font-size:10.04887104px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
          xml:space="preserve"><tspan
-           y="36.829029"
-           x="150.21344"
+           y="34.650253"
+           x="159.72937"
            id="tspan2310"
            sodipodi:role="line">struct RBasic</tspan></text>
       <text
@@ -452,16 +451,16 @@
     </g>
     <text
        xml:space="preserve"
-       style="font-size:10.68073463px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-       x="149.56145"
-       y="20.663263"
+       style="font-size:9.88611507px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="161.67238"
+       y="19.125969"
        id="text2324"
-       transform="scale(1.0127988,0.9873629)"
+       transform="scale(0.9374492,1.0667245)"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan2333"
-         x="149.56145"
-         y="20.663263">struct RString</tspan></text>
+         x="161.67238"
+         y="19.125969">struct RString</tspan></text>
     <g
        id="g2466">
       <text
@@ -487,14 +486,14 @@
          style="color:#000000;fill:#79aae5;fill-opacity:1;fill-rule:nonzero;stroke:#0b71af;stroke-width:0.88512164;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible" />
       <text
          sodipodi:linespacing="125%"
-         transform="scale(1.0127988,0.9873629)"
+         transform="scale(0.9576245,1.0442506)"
          id="text2343"
-         y="35.958134"
-         x="77.207504"
-         style="font-size:10.68073463px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         y="33.999241"
+         x="81.720764"
+         style="font-size:10.09887981px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
          xml:space="preserve"><tspan
-           y="35.958134"
-           x="77.207504"
+           y="33.999241"
+           x="81.720764"
            id="tspan2345"
            sodipodi:role="line">struct RBasic</tspan></text>
       <text
@@ -511,16 +510,16 @@
     </g>
     <text
        xml:space="preserve"
-       style="font-size:10.68073463px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-       x="76.555496"
-       y="20.668478"
+       style="font-size:9.69203186px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="84.477707"
+       y="18.755222"
        id="text2359"
-       transform="scale(1.0127988,0.9873629)"
+       transform="scale(0.9190453,1.0880857)"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan2365"
-         x="76.555496"
-         y="20.668478">struct RObject</tspan></text>
+         x="84.477707"
+         y="18.755222">struct RObject</tspan></text>
     <g
        id="g2480"
        transform="translate(0,-2.577e-3)">
@@ -542,28 +541,28 @@
          style="color:#000000;fill:#79aae5;fill-opacity:1;fill-rule:nonzero;stroke:#0b71af;stroke-width:0.88512164;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible" />
       <text
          sodipodi:linespacing="125%"
-         transform="scale(1.0127988,0.9873629)"
+         transform="scale(0.9576245,1.0442506)"
          id="text2377"
-         y="35.960747"
-         x="5.9768224"
-         style="font-size:10.68073463px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         y="34.001709"
+         x="6.3860707"
+         style="font-size:10.09887981px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
          xml:space="preserve"><tspan
-           y="35.960747"
-           x="5.9768224"
+           y="34.001709"
+           x="6.3860707"
            id="tspan2379"
            sodipodi:role="line">struct RBasic</tspan></text>
     </g>
     <text
        xml:space="preserve"
-       style="font-size:10.68073463px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-       x="5.3248143"
-       y="20.532883"
+       style="font-size:10.29648495px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="5.5659575"
+       y="19.794193"
        id="text2385"
-       transform="scale(1.0127988,0.9873629)"
+       transform="scale(0.9763624,1.0242098)"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan2391"
-         x="5.3248143"
-         y="20.532883">struct RBasic</tspan></text>
+         x="5.5659575"
+         y="19.794193">struct RBasic</tspan></text>
   </g>
 </svg>

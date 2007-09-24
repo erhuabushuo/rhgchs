@@ -13,15 +13,14 @@
    height="100"
    id="svg1329"
    sodipodi:version="0.32"
-   inkscape:version="0.45pre1"
-   sodipodi:docbase="C:\downloads\rhgchs\chs\diagrams"
-   sodipodi:docname="Copy of ch_object_classtree.svg"
+   inkscape:version="0.45.1"
+   sodipodi:docbase="/home/dreamhead/workspace/rhgchs/chs/diagrams"
+   sodipodi:docname="ch_object_givtable.svg"
    inkscape:export-filename="/d/pr/rhg/rhg/images/ch_class_metaobj.jpg"
    inkscape:export-xdpi="180.00000"
    inkscape:export-ydpi="180.00000"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
-   version="1.0"
-   sodipodi:modified="true">
+   version="1.0">
   <defs
      id="defs1331">
     <marker
@@ -140,10 +139,10 @@
      inkscape:current-layer="layer1"
      showguides="true"
      inkscape:guide-bbox="true"
-     inkscape:window-width="1440"
-     inkscape:window-height="846"
-     inkscape:window-x="-4"
-     inkscape:window-y="-4"
+     inkscape:window-width="1434"
+     inkscape:window-height="827"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
      height="100px"
      width="240px">
     <sodipodi:guide
@@ -210,7 +209,7 @@
            rx="0" />
         <g
            id="g3426"
-           transform="matrix(0.7557978,0,0,0.686414,86.589974,52.206782)">
+           transform="matrix(0.7285424,0,0,0.686414,94.559478,52.206782)">
           <text
              id="text2249"
              y="179.31154"
@@ -251,7 +250,7 @@
            rx="0" />
         <g
            id="g3446"
-           transform="matrix(0.7557978,0,0,0.686414,86.589974,52.206782)">
+           transform="matrix(0.7285424,0,0,0.686414,94.559478,52.206782)">
           <text
              id="text3448"
              y="179.31154"
@@ -292,7 +291,7 @@
            rx="0" />
         <g
            id="g3462"
-           transform="matrix(0.7557978,0,0,0.686414,86.589974,52.206782)">
+           transform="matrix(0.7285424,0,0,0.686414,94.559478,52.206782)">
           <text
              id="text3464"
              y="179.31154"
@@ -333,7 +332,7 @@
            rx="0" />
         <g
            id="g3478"
-           transform="matrix(0.7557978,0,0,0.686414,86.589974,52.206782)">
+           transform="matrix(0.7285424,0,0,0.686414,94.559478,52.206782)">
           <text
              id="text3480"
              y="179.31154"
@@ -364,18 +363,18 @@
     </g>
     <text
        xml:space="preserve"
-       style="font-size:9.72698021px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-       x="9.5066032"
-       y="55.529156"
+       style="font-size:9.33533287px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="9.9495602"
+       y="53.293331"
        id="text3524"
-       transform="scale(1.0598464,0.9435329)"><tspan
+       transform="scale(1.0171728,0.9831171)"><tspan
          sodipodi:role="line"
          id="tspan3526"
-         x="9.5066032"
-         y="55.529156">generic_iv_table</tspan></text>
+         x="9.9495602"
+         y="53.293331">generic_iv_table</tspan></text>
     <path
-       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.89757448px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Dot_m);marker-end:url(#TriangleOutM);stroke-opacity:1"
-       d="M 89.421873,50.293232 L 120.89395,50.705632"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.8726024px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Dot_m);marker-end:url(#TriangleOutM);stroke-opacity:1"
+       d="M 91.483028,50.291833 L 121.02,50.70714"
        id="path3528"
        inkscape:connector-type="polyline" />
   </g>

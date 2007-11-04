@@ -40,7 +40,7 @@ h3. 解析器生成器
 
 扫描器分割出的单词和符号列表用以构建一棵树。这棵树叫做语法树。
 
-“解析器”这个名字有时会包含扫描器和创建语法树两个部分。然而，我们这里说的“解析器”是指比较窄的含义：创建语法树。
+“解析器”这个名字有时会包含扫描器和创建语法树两个部分。然而，我们这里说的“解析器”是指狭义的：创建语法树。
 解析器如何根据一系列符号创建语法树呢？换句话说，为了找到一段代码对应的语法树，我们应该关注什么呢？
 
 第一种方式是关注单词的含义。比如，假设我们找到了一个单词`var`。
@@ -104,3 +104,343 @@ h3. 语法文件
 
 h3. `yacc`所为
 
+`yacc`主要关注的是中间部分的规则。`yacc`以这里写的语法创建一个名为`yyparse()`的函数。
+它是一个狭义的解析器。
+
+因为是狭义的，所以需要一个扫描器。然而，`yacc`并不关心这个，这是由用户完成的。扫描器函数为`yylex()`。
+
+即便`yacc`创建了`yyparse()`，它也只关心它的核心部分。“行为”——我们稍后会提及——超出了这个范围。
+你会认为`yacc`所完成的内容非常少，但事实不是这样。因为“核心部分”异常重要，
+它是`yacc`存活至今的基础，即便我们不停的抱怨它。
+
+但这个核心部分到底是什么呢？这就是我们即将看到的。
+
+h3. BNF
+
+当我们想用C写一个解析器，代码会是“这样切分字符串，用它做成一个`if`语句……” 使用解析器生成器，我们会反过来说，
+“我要解析这样的语法。”这样就可以为我们生成一个用来处理语法的解析器。这意味着有了规范就能给出实现。
+这就是`yacc`的便捷之处。
+
+但是规范如何给出呢？对于`yacc`来说，描述方法便是BNF（Backus-Naur Form，Backus-Naur范式）。
+我们来看一个非常简单的例子。
+
+<pre class="emlist">
+if_stmt: IF expr THEN stmt END
+</pre>
+
+让我们分别来看“`:`”的左右两边。左边的部分，`if_stmt`，等价于右边的部分……就是我这里要说的。换句话说，我说的是：
+
+`if_stmt`和`IF expr THEN stmt END`是等价的。
+
+这里，`if_stmt`，`IF`，`expr`……都是“符号”。`expr`是`expression`（表达式）的缩写，`stmt`是`statement`（语句）。
+对于声明`if`语句来说，它们都是必须的。
+
+一个定义称为一个规则。“`:`”左边的部分称为左边，右边的部分称为右边，相当容易记。
+
+但是稍感欠缺。如果不能让`if`语句拥有`else`，这是很糟糕的。即便可以写`else`，但在没用的时候也要写就会显得很笨拙。
+在这种情况下，我们可以这么做：
+
+<pre class="emlist">
+if_stmt: IF expr THEN stmt END
+       | IF expr THEN stmt ELSE stmt END
+</pre>
+
+"`|`"表示"or"。
+
+`if_stmt`即可以是“`IF expr THEN stmt END`”，也可以是`IF expr THEN stmt ELSE stmt END`。
+
+就这样。
+
+这里，我要提醒你注意的是，以`|`做的分割，这样便可以再添加一个的规则。
+实际上，这里强调的`|`只是一种重复左边的简洁方式。前面的例子同下面的完全相同：
+
+<pre class="emlist">
+if_stmt: IF expr THEN stmt END
+if_stmt: IF expr THEN stmt ELSE stmt END
+</pre>
+
+这就是说这个例子中定义了两个规则。
+
+对于完成`if`语句的定义而言，这还不够。因为扫描器还没有将`expr`和`stmt`这两个符号送过来，
+规则一定有适当的定义。为了接近于Ruby，我们大胆的添加一些规则。
+
+<pre class="emlist">
+stmt   : if_stmt
+       | IDENTIFIER '=' expr   /* 赋值 */
+       | expr
+
+if_stmt: IF expr THEN stmt END
+       | IF expr THEN stmt ELSE stmt END
+
+expr   : IDENTIFIER       /* 读取变量 */
+       | NUMBER           /* 整数常量 */
+       | funcall          /* 函数调用（FUNction CALL） */
+
+funcall: IDENTIFIER '(' args ')'
+
+args   : expr             /* 只有一个参数 */
+</pre>
+
+我用了两个新元素。首先是同C一样的注释，然后是`'='`表示的字符。这个`'='`当然也是一个符号。
+像“=”这样的符号不同于数字，因为它只有一种形式，用`'='`这个符号就可以了。
+我们也希望像使用保留字那样使用使用字符串，但是由于受限于C语言本身，不可能这么做。
+
+如果全部的规则都遵循这样的方式添加，也就完成了整个语法的编写。
+在`yacc`中，写下第一条规则的左边是“我们想表达的整个语法”。在这个例子中，`stmt`表示整个程序。
+
+这有些太抽象了。我们稍微的具体解释一下。“`stmt`表示整个语句”，也就是说，
+`stmt`同后面表示的符号排列在规则上是等价的，它们都可以识别为语法。比如，`stmt`和`stmt`是等价的。
+这是当然的。然后，`expr`等价于`stmt`。规则就是这样。然后，`NUMBER`和`stmt`是等价的。
+因为`NUMBER`就是`expr`，`expr`就是`stmt`。
+
+我们还可以说出更复杂的东西等价。
+
+<pre class="emlist">
+              stmt
+               ↓
+             if_stmt
+               ↓
+      IF expr THEN stmt END
+          ↓        ↓
+IF IDENTIFIER THEN expr END
+                    ↓
+IF IDENTIFIER THEN NUMBER END
+</pre>
+
+在这里展开的语句中，最终，所有的符号都来自扫描器。这意味着这个表达式是一个正确的程序。反过来说，
+当扫描器送来一系列符号，解析器能够以与展开相反的方式去理解输入。
+
+<pre class="emlist">
+IF IDENTIFIER THEN NUMBER END
+                    ↓
+IF IDENTIFIER THEN expr END
+          ↓        ↓
+      IF expr THEN stmt END
+               ↓
+             if_stmt
+               ↓
+              stmt
+</pre>
+
+
+`stmt`是一个用来表示整个程序的符号。所以，对解析器来说，这一系列符号是一个正确的程序。
+在这种情况下，解析函数`yyparse()`以返回0终止。
+
+顺便说一下，表示解析器成功的技术术语是它“接受（accept）”输入。解析器像是一个政府部门，
+如果你不能准确地按照他所要求的框框填写文档，他就会拒绝你。已接受的一系列符号就是正确满足那些框框的。
+解析器同政府部门相似得很古怪，比如，它们关注规范的细节，它们使用复杂的术语。
+
+h3. 终结符和非终结符
+
+好吧！在那个混沌时刻，我未经解释便使用了“来自扫描器的符号”这样的说法。
+不过，我会重新说明一下的。我只使用一个词“符号”，但它却有两种类型：
+
+第一种类型的符号是扫描器送来的。比如`IF`, `THEN`, `END`, `'='`等等，它们称为终结符（teriminal symbol）。
+就像前面连续展开时，最下边的那一排。在本章中，终结符总是以大写字母表示。然而，类似引号内的`'='`这样的符号是个例外。
+这样的符号都是终结符，无一例外。
+
+另一种符号不是来自扫描器，比如，`if_stmt`、`expr`和`stmt`。它们称为非终结符（nonterminal symbol）。因为它们不是来自扫描器，
+所以，它们只存在于解析器中。非终结符号一定会出现在规则的左边。在本章中，非终结符都会以小写字母表示。
+
+h3. 试验的方法
+
+现在，我要告诉你`yacc`处理语法文件的方式了。
+
+<pre class="emlist">
+%token A B C D E
+%%
+list: A B C
+    | de
+
+de  : D E
+</pre>
+
+首先，把所有用到的终结符放到`%token`后面。然而，你不必给符号打上引号（像`'='`这样）。然后，写上`%%`断开这节，编写语法。就是这样。
+
+接下来，我们来处理它。
+
+<pre class="screen">
+% yacc first.y
+% ls
+first.y  y.tab.c
+%
+</pre>
+
+类似于大多数Unix工具，“沉默表示成功”。
+
+有的`yacc`实现需要在规则（组）后面加上分号。如果是这样的话，我们就这么做：
+
+<pre class="emlist">
+%token A B C D E
+%%
+list: A B C
+    | de
+    ;
+
+de  : D E
+    ;
+</pre>
+
+我讨厌分号，所以，在这本书中，我就不再使用它们了。
+
+h3. 空规则
+
+我们在稍微看一下建立`yacc`语法描述的方式。先来介绍一下空规则。
+
+<pre class="emlist">
+void:
+</pre>
+
+右边什么都没有，这个规则是“空的”。比如，下面两个`target`具有相同的含义。
+
+<pre class="emlist">
+target: A B C
+
+target: A void B void C
+void  :
+</pre>
+
+这种东西有什么用？它非常有用。比如，像下面这样。
+
+<pre class="emlist">
+if_stmt : IF expr THEN stmts opt_else END
+
+opt_else:
+        | ELSE stmts
+</pre>
+
+使用空规则，我们可以清晰地表示出“`else`这节可以省略”这一情况。
+同上面使用两个定义的规则相比，这种方式更为简洁，还没有分散职责。
+
+h3. 递归定义
+
+下面的例子还是有些难于理解。
+
+<pre class="emlist">
+list: ITEM         /* 规则1 */
+    | list ITEM    /* 规则2 */
+</pre>
+
+这表示一个以上的ITEM，也就是说，下面的任何一列符号：
+
+<pre class="emlist">
+ITEM
+ITEM ITEM
+ITEM ITEM ITEM
+ITEM ITEM ITEM ITEM
+      :
+</pre>
+
+明白了吗？首先，根据规则1，`list`可以是`ITEM`。如果把它同规则2合并，
+`list`就可以是`ITEM ITEM`。
+
+<pre class="emlist">
+list: list ITEM
+    = ITEM ITEM
+</pre>
+
+我们已经知道了符号列`ITEM ITEM`等价于`list`。通过再次对`list`应用规则2，我们就可以说3个`ITEM`也等价于`list`。
+这样连续不断做下去，`list`可以增长到任意规模。
+
+来看下一个例子。下面的例子表示0个或多个`ITEM`的列表。
+
+<pre class="emlist">
+list:
+    | list ITEM
+</pre>
+
+首先，第一行表示“`list`等价于空”。我用空表示0个`ITEM`的列表。然后看规则2，
+我们可以说“`list ITEM`等价于1个`ITEM`”。因为`list`等价于空。
+
+<pre class="emlist">
+list: list   ITEM
+    = (void) ITEM
+    =        ITEM
+</pre>
+
+通过多次应用相同的替换操作，我们就可以理解`list`表示一个0个或多个ITEM的列表。
+
+有了这个知识，“2个或多个`ITEM`的列表”或是“3个或多个`ITEM`的列表”就容易了，我们甚至可以创建“有偶数元素的列表”。
+
+<pre class="emlist">
+list:
+    | list ITEM ITEM
+</pre>
+
+h2. 值的构建
+
+抽象的话题已经持续得够长了，因此，在本节中，我想讨论一些更具体的话题。
+
+h3. 移进与归约
+
+目前为止，我们只看到了如何编写文法，但是，我们需要的是构建完整的语法树。然而，我恐怕不得不说，
+只是表述规则是没有办法构建出语法树的。因此，这次我们要再进一步，解释一下如何构建语法树。
+
+我们先来看看执行期间解析器做了些什么。我们以下面的简单语法为例。
+
+<pre class="emlist">
+%token A B C
+%%
+program: A B C
+</pre>
+
+解析器中有一个栈，称为语义栈（semantic stack）。
+解析器把所有来自扫描器的符号都推入栈中。这个动作称为“移进（shift）符号”。
+
+<pre class="emlist">
+[ A B ] ← C   移进
+</pre>
+
+当栈顶是一个规则的某一个右端的话，这就是”理解“了。出现这种情况时，就用规则的左端替换在栈上的右端。
+
+<pre class="emlist">
+[ A B C ]
+    ↓         归约
+[ program ]
+</pre>
+
+这个动作称为”将`A B C`归约为`program`“。这话说起来就像凑齐中发白就是大三元一样。不就是这样吗？
+
+`program`表示整个程序，栈中只有`program`时，也许就找到了整个程序。因此，如果输入正好到此为止，那么它就被”接受“了。
+
+再来看一个稍微复杂一点的语法。
+
+<pre class="emlist">
+%token IF E S THEN END
+%%
+program : if
+
+if      : IF expr THEN stmts END
+
+expr    : E
+
+stmts   : S
+        | stmts S
+</pre>
+
+扫描器的输入是这样的。
+
+<pre class="emlist">
+IF  E  THEN  S  S  S  END
+</pre>
+
+语义栈的变化如下所示：
+
+|栈							|动作|
+|                                                       |最初是空栈|
+|`IF`							|移进`IF`|
+|`IF E`						|移进`E`|
+|`IF expr`					|归约`E`→`expr` |
+|`IF expr THEN`				|移进`THEN`|
+|`IF expr THEN S`			|移进`S`|
+|`IF expr THEN stmts`		|归约`S`→`stmts` |
+|`IF expr THEN stmts S`		|移进`S`|
+|`IF expr THEN stmts`		|归约`stmts S`→`stmts` |
+|`IF expr THEN stmts S`		|移进`S`|
+|`IF expr THEN stmts`		|归约`stmts S`→`stmts` |
+|`IF expr THEN stmts END`	|移进`END`|
+|`if`							|归约`IF expr THEN stmts END`→`if` |
+|`program`					|归约`if`→`program` |
+|							|accept.|
+
+最后注意一点，归约时符号未必总是减少。存在空规则时，可能会生成”空“符号。

@@ -561,7 +561,7 @@ YYSTYPE *yyvsp = yyvs;   /* 栈顶指针 */
 /* yacc处理前的动作 */
 target: A B C { func($1, $2, $3); }
 
-/* 变换后、y.tab.c里的样子 */
+/* 变换后、y.tab.c里的情况 */
 { func(yyvsp[-2], yyvsp[-1], yyvsp[0]); 
 </pre>
 
@@ -637,7 +637,7 @@ h3. 冲突
 
 至此，`yacc`不再那么可怕了。
 
-如果这样想，真的很甜蜜。为什么`yacc`会这么可怕？理由在后面。
+如果真能这样，确实很甜蜜。为什么`yacc`会这么可怕？理由在后面。
 
 前面无意写过“规则右端与栈顶对应”，那下面的规则会怎么样呢？
 
@@ -646,5 +646,56 @@ target  : A B C
         | A B C
 </pre>
 
+实际上，出现`A B C`这样的符号序列时，肯定是不知道与哪个规则对应。这样的事情，人不知道，因此，`yacc`也不知道。
+一旦出现这种奇怪的语法，`yacc`就会抱怨reduce/reduce conflict（归约/归约冲突），这意味着可能同时存在多个归约规则。
 
+<pre class="screen">
+% yacc rrconf.y
+conflicts:  1 reduce/reduce
+</pre>
+
+如果这是正常的，你会以为不做这样偶然的事情就可以了，但是下面的例子怎么办呢？这里的符号完全相同。
+
+<pre class="emlist">
+target  : abc
+        | A bc
+
+abc     : A B C
+
+bc      :   B C
+</pre>
+
+这样的话，就比较可能出现了。特别是在边移动边考虑规则的情况下，不知不觉便形成了这种规则。
+
+类似的，也可能出现下面的模式。
+
+<pre class="emlist">
+target  : abc
+        | ab C
+
+abc     : A B C
+
+ab      : A B
+</pre>
+
+在出现`A B C`这样的符号序列情况下，到底是选`abc`，还是选`ab`和`C`的组合呢？这时，
+`yacc`就会产生shift/reduce conflict（移进/归约冲突）。这意味着同时存在移进规则和归约规则。
+
+<pre class="screen">
+% yacc srconf.y
+conflicts:  1 shift/reduce
+</pre>
+
+最著名的移进/归约冲突的例子是“dangling else问题”。比如，C语言的`if`语句就有这样的问题。
+简化一下，写出来就是这样。
+
+<pre class="emlist">
+stmt     : expr ';'
+         | if
+
+expr     : IDENTIFIER
+
+if       : IF '(' expr ')' stmt
+         | IF '(' expr ')' stmt  ELSE stmt
+</pre>
 

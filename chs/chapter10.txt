@@ -1,0 +1,277 @@
+$comment(-*- coding: utf-8 -*- vim: set encoding=utf-8:)$
+Translated by Ye Zheng, Chaofan Jiang
+
+h1. 第十章：解析器
+
+h2. 指南
+
+h3. 解析器的构建
+
+解析器定义在`yacc`源文件`parse.y`中，`yacc`以此生成一个可工作的解析器，`parse.c`。
+
+虽然有人预期有个包含扫描器的`lex.c`，但情况并非如此。这个文件由`gperf`创建，
+它以一个`keywords`文件为输入，产生一个了定义了保留字的hash表。
+这个由工具生成的`lex.c``#include`在(也是由工具生成的)`parse.c`中。
+现在解释这个过程的细节还有些困难，所以，我们稍后再回过来解释它。
+
+图1展示了解析器的构建过程。那些使用Windows的读者可能不太清楚，
+`mv` (移动)命令为文件创建了一个新的拷贝，删除原有的那个。
+`cc`当然是C编译器，`cpp`是C的预处理器。
+
+!images/ch_parser_build.png(解析器构建过程)!
+
+h3. 剖析`parse.y`
+
+我们详细的看一下`parse.y`。下面的图粗略地表示`parse.y`的主干。
+
+▼ parse.y 
+<pre class="longlist">
+%{
+header
+%}
+%union ....
+%token ....
+%type ....
+
+%%
+
+rules
+
+%%
+user code section
+    parser interface
+    scanner (character stream processing)
+    syntax tree construction
+    semantic analysis
+    local variable management
+    ID implementation
+</pre>
+
+之前，只是简要的提到过规则和用户代码节。在本章中，我们要开始详细的研究解析器，因此，我们将把注意力转移到这些节上来。
+
+用户代码节中，定义了大量的支撑函数，然而，粗略说来，它们分为六个部分，前面提到过。
+下表给出了每个部分在书中何处解释。
+
+|分类|章|节|
+|解析器接口|本章|第三节《扫描》|
+|扫描器|本章|第三节《扫描》|
+|语法树的构建|第十二章《语法树的构建》|第二节《语法树的构建》|
+|语意分析|第十二章《语法树的构建》|第三节《语义分析》|
+|局部变量管理|第十二章《语法树的构建》|第四节《局部变量》|
+|`ID`实现|第三章《名称与名称表》|第二节《`ID`和符号》|
+
+h2. 语法规则总论
+
+h3. 编码规则
+
+`ruby`的语法遵循一定的编码规则，一旦你熟悉了，它就会变得很易读。
+
+先来看看符号命名，所有非终结符都是小写字母。终结符号以某些小写字母作为前缀，后面跟着大写字母。
+保留字(关键字)以字母`k`为前缀。其它终结符以字母`t`为前缀。
+
+▼ 符号命名举例
+
+|字符串|符号名|
+|(非终结符l)|`bodystmt`|
+|`if`|`kIF`|
+|`def`|`kDEF`|
+|`rescue`|`kRESCUE`|
+|`varname`|`tIDENTIFIER`|
+|`ConstName`|`tCONST`|
+|1|`tINTEGER`|
+
+在这些规则中，唯一例外的是`klBEGIN`和`klEND`。这两个符号名分别对应保留字“BEGIN”和“END”，这里`l`表示`large`。
+因为保留字`begin`和`end`已经存在(自然用的是符号名`kBEGIN`和`kEND`，所以需要这些不标准的符号名。
+
+h3. 重要的符号
+
+`parse.y`既包含了语法，也包含了动作，然而，现在，我想把注意力集中在语法规则上。用脚本sample/exyacc.rb可以从文件中将语法规则提取出来。
+此外，运行`yacc -v`会产生一个日志文件`y.output`，其中也包含了语法规则，然而，这个文件相当难读。在本章中，
+我用一个稍微修改过的`exyacc.rb`来提取语法规则。
+
+▼ `parse.y`(规则)
+<pre class="longlist">
+program         : compstmt
+
+bodystmt        : compstmt
+                  opt_rescue
+                  opt_else
+                  opt_ensure
+
+compstmt        : stmts opt_terms
+                       :
+                       :
+</pre>
+
+输出相当长，超过450行的语法规则。在本章中，只包含了最重要的部分。
+
+那么，哪些符号才是最重要的呢？比如`program`、`expr`、`stmt`、`primary`、`arg`等符号都是非常重要的。
+它们表示了程序设计语言中最常见的语法元素，这些元素将是我们主要关注的。下表列出了这些常见元素和表示它们的符号名。
+
+|语法元素|相关符号名|
+|程序|`program prog file input stmts whole`|
+|语句|`statement stmt`|
+|表达式|`expression expr exp`|
+|最小的元素|`primary prim`|
+|表达式的左边|`lhs`(left hand side)|
+|表达式的右边|`rhs`(right hand side)|
+|函数调用|`funcall function_call call function`|
+|方法调用|`method method_call call`|
+|参数|`argument arg`|
+|函数定义|`defun definition function fndef`|
+|声明|`declaration decl`|
+
+通常说来，程序设计语言有下面的符号层次关系。
+
+|程序元素|属性|
+|语句(statement)|无法与其它符号组合。语法树的主干。|
+|表达式(expression)|无法与自身组合，也无法与其它表达式的一部分组合。语法树内部节点。|
+|项(Primary)|无法进一步分解的元素。语法树的叶子节点。| 
+
+语句就是类似于C函数定义和Java类定义一样的东西。表达式可能是通常的过程调用，或是数学表达式，等等。
+项通常是指字符串常量或是数字等。某些语言并不包含所有这些符号类型，然而，它们通常包含某种类似的符号层次结构：
+`program`→`stmt`→`expr`→`primary`。
+
+低层次的符号可以提升至高层次，反之亦然。比如，在C中，函数调用是表达式，也可以是语句。
+
+相反，加了括号的表达式就成为了项。
+
+语句的范围根据语言的不同差别很大。考虑一下赋值。在C中，表达式的值可用于赋值，而在Pascal中，赋值只会用在语句一级。
+函数和类定义通常就是语句，而在像Lisp和Scheme这样的语言中，一切都是表达式，它们就也是表达式了。
+在这点上，Ruby遵循了Lisp的设计。
+
+h3. 程序结构
+
+那么，将注意力转回`ruby`的语法规则。`yacc`先检查`parse.y`中定义的第一条规则，正如我们可以在下表中看到的，
+它是`program`。从这追踪下去，我们可以看出Ruby语法的展开，前面提到的`program stmt expr primary`都在这里出现了。
+我们在这还会看到一个额外的规则：`arg`。
+
+▼ `ruby`语法(概要)
+<pre class="longlist">
+program         : compstmt
+
+compstmt        : stmts opt_terms
+
+stmts           : none
+                | stmt
+                | stmts terms stmt
+
+stmt            : kALIAS fitem  fitem
+                | kALIAS tGVAR tGVAR
+                    :
+                    :
+                | expr
+
+expr            : kRETURN call_args
+                | kBREAK call_args
+                    :
+                    :
+                | '!' command_call
+                | arg
+
+arg             : lhs '=' arg
+                | var_lhs tOP_ASGN arg
+                | primary_value '[' aref_args ']' tOP_ASGN arg
+                    :
+                    :
+                | arg '?' arg ':' arg
+                | primary
+
+primary         : literal
+                | strings
+                    :
+                    :
+                | tLPAREN_ARG expr  ')'
+                | tLPAREN compstmt ')'
+                    :
+                    :
+                | kREDO
+                | kRETRY
+</pre>
+
+关注一下每条规则的最后一项，你就可以清晰看出`program`→`stmt`→`expr`→`arg`→`primary`的层次。
+
+我想关注一下`primary`规则。
+
+<pre class="emlist">
+primary         : literal
+                    :
+                    :
+                | tLPAREN_ARG expr  ')'      /* 这里 */
+</pre>
+
+`tLPAREN_ARG`中的`t`表示终结符，`L`表示左边，`PAREN`表示括号，也就是说，它表示一个开括号。
+为什么不用`‘(’`，我们会在下一章《上下文相关的扫描器》中解释。这条规则的将`expr`退化为`primary`。
+图2表示了这一点。从图2可以看出，它创建了一个环，箭头表示在解析期间如何归约。
+
+!images/ch_parser_exprloop.png(`expr`退化)!
+
+下一个规则也特别有趣。
+
+<pre class="emlist">
+primary         : literal
+                    :
+                    :
+                | tLPAREN compstmt ')'   /* 这里 */
+</pre>
+
+`compstmt`表示整个程序(program)，根据这条归则，它可以退化为`primary`。图3阐释了这条规则。
+
+!images/ch_parser_progloop.png(`program`退化)!
+
+这意味着，Ruby中任何语法元素围上括号，就变成了`primary`，可以作为参数传给函数，
+可以用作表达式的右边，等等。看看下面的例子，你就知道是什么意思了。
+
+<pre class="emlist">
+p((class C; end))
+p((def a() end))
+p((alias ali gets))
+p((if true then nil else nil end))
+p((1 + 1 * 1 ** 1 - 1 / 1 ^ 1))
+</pre>
+
+如果我们以`-c`选项(语法检查)调用`ruby`，我们会得到下面的输出。
+
+<pre class="screen">
+% ruby -c primprog.rb
+Syntax OK
+</pre>
+
+虽然初看上去难以接受，不过，在Ruby中确实可以这么做！
+
+我们看语意分析(在第十二章《语法树的构建》”)的时候，会看到这个细节。然而，这条规则有一个很重要的例外。
+比如，把`return`语句作为参数传给函数，将会导致错误。“以括号围上任何东西表示它可以作为参数传给函数”，
+在大多数情况下都成立。
+
+在下一节中，我会详细的讨论一下最重要的语法规则。
+
+h3. `program`
+
+▼ `program`
+<pre class="longlist">
+program         : compstmt
+
+compstmt        : stmts opt_terms
+
+stmts           : none
+                | stmt
+                | stmts terms stmt
+</pre>
+
+正如前面提到的，在语法上，`program`表示整个程序。`program`和`compstmts`是相同的，而`compstmts`几乎和`stmts`相同。
+`stmts`是`terms`的段落`stmt`的列表。这也就是说完整的程序是`terms`的段落`stmt`的列表。
+
+`terms`当然是terminators的缩写，语句结束符号，就是分号及换行符。
+`opt_terms`是OPTional `terms`(可省略的`terms`)的意思。它的定义如下：
+
+▼ `opt_terms`
+<pre class="longlist">
+opt_terms       :
+                | terms
+
+terms           : term
+                | terms ';'
+
+term            : ';'
+                | '\n'
+</pre>

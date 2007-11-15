@@ -686,7 +686,7 @@ ab      : A B
 conflicts:  1 shift/reduce
 </pre>
 
-最著名的移进/归约冲突的例子是“dangling else问题”。比如，C语言的`if`语句就有这样的问题。
+最著名的移进/归约冲突的例子是“空悬else问题”。比如，C语言的`if`语句就有这样的问题。
 简化一下，写出来就是这样。
 
 <pre class="emlist">
@@ -699,3 +699,53 @@ if       : IF '(' expr ')' stmt
          | IF '(' expr ')' stmt  ELSE stmt
 </pre>
 
+表达式只是一个IDENTIFIER（变量），`if`的主体只是一个语句规则。那么，用这个语法解析下面的程序会怎么样呢？
+
+<pre class="emlist">
+if (cond)
+    if (cond)
+        true_stmt;
+    else
+        false_stmt;
+</pre>
+
+这么写看起来一目了然，然而，实际上却解释成下面这样。
+
+<pre class="emlist">
+if (cond) {
+    if (cond)
+        true_stmt;
+}
+else {
+    false_stmt;
+}
+</pre>
+
+其实就是`else`同外面的还是里面的`if`配对的问题。
+
+不过，相对于reduce/reduce conflict来说，shift/reduce conflict还是危害比较小的冲突。为什么这么说呢？
+因为大部分的情况下选择移进都会成功。选择移进移进和“匹配尽可能近的元素”是一个意思，也符合人们的直觉。
+实际上，“空悬else”也是移进比较好。正是因为这样，`yacc`顺应潮流，出现shift/reduce conflict的时候默认选择移进。
+
+h3. 预读
+
+尝试用`yacc`解析下面的语法。
+
+<pre class="emlist">
+%token A B C
+%%
+target  : A B C   /* 规则1 */
+        | A B     /* 规则2 */
+</pre>
+
+怎么想都应该有冲突。读到`A B`时，规则1想要移进，规则2想要归约。总之，这肯定是shift/reduce conflict。然而……
+
+<pre class="screen">
+% yacc conf.y
+%
+</pre>
+
+很奇怪，没有冲突。怎么会这样？
+
+实际上，`yacc`生成的解析器能够“预读（look ahead）”一个符号。在实际进行移进或规约之前，
+先看一下下面的符号，再决定如何来做。

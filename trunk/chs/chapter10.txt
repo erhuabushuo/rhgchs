@@ -9,8 +9,8 @@ h3. 解析器的构建
 
 解析器定义在`yacc`源文件`parse.y`中，`yacc`以此生成一个可工作的解析器，`parse.c`。
 
-虽然有人预期有个包含扫描器的`lex.c`，但情况并非如此。这个文件由`gperf`创建，
-它以一个`keywords`文件为输入，产生一个了定义了保留字的hash表。
+虽然有人预期有个包含扫描器的`lex.c`，但情况并非如此。这个文件由`gperf`生成的，
+它以一个`keywords`文件为输入，定义了一个保留字的hash表。
 这个由工具生成的`lex.c``#include`在(也是由工具生成的)`parse.c`中。
 现在解释这个过程的细节还有些困难，所以，我们稍后再回过来解释它。
 
@@ -85,9 +85,9 @@ h3. 编码规则
 
 h3. 重要的符号
 
-`parse.y`既包含了语法，也包含了动作，然而，现在，我想把注意力集中在语法规则上。用脚本sample/exyacc.rb可以从文件中将语法规则提取出来。
-此外，运行`yacc -v`会产生一个日志文件`y.output`，其中也包含了语法规则，然而，这个文件相当难读。在本章中，
-我用一个稍微修改过的`exyacc.rb`来提取语法规则。
+`parse.y`既包含了语法，也包含了动作，然而，现在，我想把注意力集中在语法规则上。
+用脚本sample/exyacc.rb可以从文件中将语法规则提取出来。此外，运行`yacc -v`会产生一个日志文件`y.output`，
+其中也包含了语法规则，然而，这个文件相当难读。在本章中，我用一个稍微修改过的`exyacc.rb`来提取语法规则。
 
 ▼ `parse.y`(规则)
 <pre class="longlist">
@@ -113,8 +113,8 @@ compstmt        : stmts opt_terms
 |语句|`statement stmt`|
 |表达式|`expression expr exp`|
 |最小的元素|`primary prim`|
-|表达式的左边|`lhs`(left hand side)|
-|表达式的右边|`rhs`(right hand side)|
+|表达式的左端|`lhs`(left hand side)|
+|表达式的右端|`rhs`(right hand side)|
 |函数调用|`funcall function_call call function`|
 |方法调用|`method method_call call`|
 |参数|`argument arg`|
@@ -200,7 +200,7 @@ primary         : literal
                 | tLPAREN_ARG expr  ')'      /* 这里 */
 </pre>
 
-`tLPAREN_ARG`中的`t`表示终结符，`L`表示左边，`PAREN`表示括号，也就是说，它表示一个开括号。
+`tLPAREN_ARG`中的`t`表示终结符，`L`表示左端，`PAREN`表示括号，也就是说，它表示一个开括号。
 为什么不用`‘(’`，我们会在下一章《上下文相关的扫描器》中解释。这条规则的将`expr`退化为`primary`。
 图2表示了这一点。从图2可以看出，它创建了一个环，箭头表示在解析期间如何归约。
 
@@ -220,7 +220,7 @@ primary         : literal
 !images/ch_parser_progloop.png(`program`退化)!
 
 这意味着，Ruby中任何语法元素围上括号，就变成了`primary`，可以作为参数传给函数，
-可以用作表达式的右边，等等。看看下面的例子，你就知道是什么意思了。
+可以用作表达式的右端，等等。看看下面的例子，你就知道是什么意思了。
 
 <pre class="emlist">
 p((class C; end))
@@ -258,10 +258,11 @@ stmts           : none
                 | stmts terms stmt
 </pre>
 
-正如前面提到的，在语法上，`program`表示整个程序。`program`和`compstmts`是相同的，而`compstmts`几乎和`stmts`相同。
-`stmts`是`terms`的段落`stmt`的列表。这也就是说完整的程序是`terms`的段落`stmt`的列表。
+正如前面提到的，在语法上，`program`表示整个程序。`program`和`compstmts`是相同的，
+而`compstmts`几乎等同于`stmts`。`stmts`是以`terms`分割的`stmt`列表。
+也就是说整个程序就是以`terms`分割的`stmt`列表。
 
-`terms`当然是terminators的缩写，语句结束符号，就是分号及换行符。
+不用说，`terms`自然是terminators的缩写，语句终结符号，也就是分号及换行符。
 `opt_terms`是OPTional `terms`(可省略的`terms`)的意思。它的定义如下：
 
 ▼ `opt_terms`
@@ -275,3 +276,285 @@ terms           : term
 term            : ';'
                 | '\n'
 </pre>
+
+
+因为`terms`是`';'`和`'\n'`后加上任意连续的`';'`，如果只考虑这个规则，两个以上的回车就会出错。实际试一下。
+
+<pre class="emlist">
+1 + 1   # 第一个回车
+        # 第二个回车
+        # 第三个回车
+1 + 1
+</pre>
+
+再执行一下`ruby -c`。
+
+<pre class="screen">
+% ruby -c optterms.rb
+Syntax OK
+</pre>
+
+奇怪啊！居然通过了。实际上，连续的回车在扫描器的级别就删掉了，传给解析器只是一个回车。
+
+顺便说一下，既然`program`等同于`compstmt`，那为什么还存在这样一个规则呢？实际上，它的存在就是为了执行动作。
+比如，`program`就是表示为整个程序做准备，且仅需要进行一次的处理。纯粹从语法角度考虑的话，省略`program`完全没有问题。
+
+将其泛化的话，规则可分为阅读分析必需和执行动作必需两种。`stmts`里的`none`也是一个为了动作而存在的规则，
+它为空列表返回(`NODE*`型的)`NULL`指针。
+
+h3. `stmt`
+
+接下来是语句，`stmt`。`stmt`规则的量很大，一点一点的看吧！
+
+▼ `stmt`(1)
+<pre class="longlist">
+stmt            : kALIAS fitem  fitem
+                | kALIAS tGVAR tGVAR
+                | kALIAS tGVAR tBACK_REF
+                | kALIAS tGVAR tNTH_REF
+                | kUNDEF undef_list
+                | stmt kIF_MOD expr_value
+                | stmt kUNLESS_MOD expr_value
+                | stmt kWHILE_MOD expr_value
+                | stmt kUNTIL_MOD expr_value
+                | stmt kRESCUE_MOD stmt
+                | klBEGIN '{' compstmt '}'
+                | klEND '{' compstmt '}'
+</pre>
+
+很容易理解。开始的几个是`alias`，接下来是`undef`，而后几个连续的“前缀`_MOD`”应该是修饰符（modifier），想来应该是后置语法。
+
+`expr_value`和`primary_value`是为了动作而准备的规则。比如`expr_value`表示有值(value)的`expr`。
+没有值的`expr`，是`return`和`break`，以及包含它们的`if`语句等。“有值”的详细定义请参考第12章《构建语法树》。
+同样，`primary_value`表示“有值”的`primary`。
+
+`klBEGIN`和`klEND`就是已经解释过的`BEGIN`和`END`。
+
+▼ `stmt`(2)
+<pre class="longlist">
+                | lhs '=' command_call
+                | mlhs '=' command_call
+                | var_lhs tOP_ASGN command_call
+                | primary_value '[' aref_args ']' tOP_ASGN command_call
+                | primary_value '.' tIDENTIFIER tOP_ASGN command_call
+                | primary_value '.' tCONSTANT tOP_ASGN command_call
+                | primary_value tCOLON2 tIDENTIFIER tOP_ASGN command_call
+                | backref tOP_ASGN command_call
+</pre>
+
+将这些规则放在一起是正确的。共通点在于它们都是右端有`command_call`的赋值。`command_call`是省略参数括号的方法调用。
+下表列出了新出现的符号，可以对照着确认一下。
+
+|`lhs`|赋值的左端(Left Hand Side)|
+|`mlhs`|多重赋值的左端(Multiple Left Hand Side)|
+|`var_lhs`|可变赋值的左端 (VARiable Left Hand Side)|
+|`tOP_ASGN`|`+=`和`*=`等组合赋值符号(OPerator ASsiGN)|
+|`aref_args`|`[]`用于表示方法调用参数(Array REFerence)|
+|`tIDENTIFIER`|用作局部变量的标识符|
+|`tCONSTANT`|用作常量的标识符(第一个字母大写)|
+|`tCOLON2`|`::`|
+|`backref`|`$1 $2 $3...`|
+
+顺便说一下，aref是Lisp的术语。与之对应的aset也是，它是array set的略称。这个缩写在`ruby`源码中的很多地方都用到了。
+
+▼ `stmt`(3)
+<pre class="longlist">
+                | lhs '=' mrhs_basic
+                | mlhs '=' mrhs
+</pre>
+
+这两个是多重代入。`mrhs`和`mlhs`有着同样的构造，multiple的`rhs`(右端)。
+正如这里所看到的，光看名字的意义就很容易理解。
+
+▼ `stmt`(4)
+<pre class="longlist">
+                | expr
+</pre>
+
+最后，和`expr`联系到一起。
+
+h3. `expr`
+
+▼ `expr`
+<pre class="longlist">
+expr            : kRETURN call_args
+                | kBREAK call_args
+                | kNEXT call_args
+                | command_call
+                | expr kAND expr
+                | expr kOR expr
+                | kNOT expr
+                | '!' command_call
+                | arg
+</pre>
+
+表达式。`ruby`表达式的语法相当小。
+
+原因是一般情况下归到`expr`几乎都被归到`arg`里去了。其原因是，通常情况下，`expr`几乎都会归结到`arg`。
+反过来说，这里还有一些没有归结到`arg`的。谈及剩余的部分，也就是一组省略了括号的方法调用。
+`call_args`是分离出来的参数列表，`command_call`是前面提及的省略了括号的方法。
+如果将这些放到“小的”单元中，就会产生激烈的冲突。
+
+然而，下面这两个有些不同。
+
+<pre class="emlist">
+expr kAND expr
+expr kOR expr
+</pre>
+
+`kAND`是“`and`”，`kOR`是“`or`”。这两个扮演着控制结构的角色，因此，必须放到`command_call`以上的“大的”语法单元中。
+而且，`expr`中有`command_call`。因此，最低限度可以做成`expr`。（＊）比如存在下面这种用法……
+
+<pre class="emlist">
+  valid_items.include? arg  or raise ArgumentError, 'invalid arg'
+# valid_items.include?(arg) or raise(ArgumentError, 'invalid arg')
+</pre>
+
+要是`kAND`规则中用的不是`expr`而是`arg`，就会解释成下面这样：
+
+<pre class="emlist">
+valid_items.include?((arg or raise)) ArgumentError, 'invalid arg'
+</pre>
+
+当然就是解析错误了！
+
+h3. `arg`
+
+▼ `arg`
+<pre class="longlist">
+arg             : lhs '=' arg
+                | var_lhs tOP_ASGN arg
+                | primary_value '[' aref_args ']' tOP_ASGN arg
+                | primary_value '.' tIDENTIFIER tOP_ASGN arg
+                | primary_value '.' tCONSTANT tOP_ASGN arg
+                | primary_value tCOLON2 tIDENTIFIER tOP_ASGN arg
+                | backref tOP_ASGN arg
+                | arg tDOT2 arg
+                | arg tDOT3 arg
+                | arg '+' arg
+                | arg '-' arg
+                | arg '*' arg
+                | arg '/' arg
+                | arg '%' arg
+                | arg tPOW arg
+                | tUPLUS arg
+                | tUMINUS arg
+                | arg '|' arg
+                | arg '^' arg
+                | arg '&' arg
+                | arg tCMP arg
+                | arg '>' arg
+                | arg tGEQ arg
+                | arg '<' arg
+                | arg tLEQ arg
+                | arg tEQ arg
+                | arg tEQQ arg
+                | arg tNEQ arg
+                | arg tMATCH arg
+                | arg tNMATCH arg
+                | '!' arg
+                | '~' arg
+                | arg tLSHFT arg
+                | arg tRSHFT arg
+                | arg tANDOP arg
+                | arg tOROP arg
+                | kDEFINED opt_nl  arg
+                | arg '?' arg ':' arg
+                | primary
+</pre>
+
+规则的数量虽然多，但语法的复杂度和规则数量并不成比例。仅仅是情况数量众多的语法对`yacc`来说是很容易处理的，
+另一方面，规则递归的深度却会对复杂性有很大的影响。
+
+这样说来，值得注意的是形如`arg OP arg`这样运算符的递归，不过，由于这些运算符都设定了优先级，这里不过是简单枚举罢了。
+合并`arg`规则中“简单枚举”，将其剔除。
+
+<pre class="emlist">
+arg: lhs '=' arg              /* 1 */
+   | primary T_opeq arg       /* 2 */
+   | arg T_infix arg          /* 3 */
+   | T_pre arg                /* 4 */
+   | arg '?' arg ':' arg      /* 5 */
+   | primary                  /* 6 */
+</pre>
+
+因为终结符和终结符列表没什么区别，这里全部用`T_`前缀表示。`opeq`就是`operator + equal`，`T_pre`表示`'!'`和`'~'`之类前置型的运算符，
+`T_infix`表示`'*'`以及`'%'`之类的二元运算符。
+
+为了不和这个结构冲突，以下几点十分重要(但这不是全部)。
+
+* `T_infix`里不含`'='`。
+
+`arg`和`lhs`有部分重叠，如果这里有`'='`，便无法区分规则1和3。
+
+* `T_opeq`和`T_infix`不应有相同的项。
+
+`arg`包含`primary`，如果有相同的项，便无法区分规则2和3。
+
+* `T_infix`里没有`'?'`
+
+如果有的话，规则3和5就会引起shift/reduce conflict。
+
+* `T_pre`不含`'?'`和`':'`
+
+如果有的话，规则4和5就会引起复杂的冲突。
+
+作为结论是由于全部条件成立，这个语法不会冲突。这当然是当然的。
+
+h3. `primary`
+
+`primary`的规则很多，从头开讲。
+
+▼ `primary`(1)
+<pre class="longlist">
+primary         : literal
+                | strings
+                | xstring
+                | regexp
+                | words
+                | qwords
+</pre>
+
+字面量（literal）类。`literal`包括`Symbol`(`:sym`)和数值。
+
+▼ `primary`(2)
+<pre class="longlist">
+                | var_ref
+                | backref
+                | tFID
+</pre>
+
+变量类。`var_ref`是局部变量或是实例变量等。`backref`是`$1 $2 $3`……。
+`tFID`是包含`!`和`?`的标识符，比如`include? reject!`等。
+
+因为`tFID`不可能是局部变量，即便单独出现，它会在解析器层次上变成方法调用。
+
+▼ `primary`(3)
+<pre class="longlist">
+                | kBEGIN
+                  bodystmt
+                  kEND
+</pre>
+
+`bodystmt`包括`rescue`和`ensure`，也就是异常控制的`begin`。
+
+▼ `primary`(4)
+<pre class="longlist">
+                | tLPAREN_ARG expr  ')'
+                | tLPAREN compstmt ')'
+</pre>
+
+解释过了，语法退化。
+
+▼ `primary`(5)
+<pre class="longlist">
+                | primary_value tCOLON2 tCONSTANT
+                | tCOLON3 cname
+</pre>
+
+常量的引用。`tCONSTANT`表示常量名(大写开始的标识符)。
+
+`tCOLON2`和`tCOLON3`虽然都是`::`，不过，`tCOLON3`表示顶层的`::`。
+也就是说，`::Const`这种情况的`::`，而`Net::SMTP`的`::`属于`tCOLON2`。
+
+

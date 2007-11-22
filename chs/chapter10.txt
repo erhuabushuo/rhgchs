@@ -392,7 +392,7 @@ expr            : kRETURN call_args
 
 原因是一般情况下归到`expr`几乎都被归到`arg`里去了。其原因是，通常情况下，`expr`几乎都会归结到`arg`。
 反过来说，这里还有一些没有归结到`arg`的。谈及剩余的部分，也就是一组省略了括号的方法调用。
-`call_args`是分离出来的参数列表，`command_call`是前面提及的省略了括号的方法。
+`call_args`是剥离出的参数列表，`command_call`是前面提及的省略了括号的方法。
 如果将这些放到“小的”单元中，就会产生激烈的冲突。
 
 然而，下面这两个有些不同。
@@ -557,4 +557,152 @@ primary         : literal
 `tCOLON2`和`tCOLON3`虽然都是`::`，不过，`tCOLON3`表示顶层的`::`。
 也就是说，`::Const`这种情况的`::`，而`Net::SMTP`的`::`属于`tCOLON2`。
 
+将同样的记号（token）写成不同的符号对应着不同的括号省略方式。比如区别下面这两个。
 
+<pre class="emlist">
+p Net::HTTP    # p(Net::HTTP)
+p Net  ::HTTP  # p(Net(::HTTP))
+</pre>
+
+如果前面有空格或是左括号之类的分隔符，是`tCOLON3`，其它情况是`tCOLON2`。
+
+▼ `primary`(6)
+<pre class="longlist">
+                | primary_value '[' aref_args ']'
+</pre>
+
+索引形式的调用，比如`arr[i]`。
+
+▼ `primary`(7)
+<pre class="longlist">
+                | tLBRACK aref_args ']'
+                | tLBRACE assoc_list '}'
+</pre>
+
+数组字面量和hash字面量。这里的`tLBRACK`表示`'['`，这个`'['`前面没有空格，
+以此区别省略括号的方法调用。
+
+然而，这个规则的终结符仅相差一个字符，很容易混淆。下表列出了括号的读法，可以进行对照。
+
+▼ 各种括号的英文名
+
+|符号|英文名|中文名|
+|`( )`|parentheses|括号、圆括号|
+|`{ }`|braces|大括号、花括号|
+|`[ ]`|brackets|中括号、方括号|
+
+▼ `primary`(8)
+<pre class="longlist">
+                | kRETURN
+                | kYIELD '(' call_args ')'
+                | kYIELD '(' ')'
+                | kYIELD
+                | kDEFINED opt_nl '('  expr ')'
+</pre>
+
+形式与方法调用类似的语法。顺序是`return`、`yield`和`defined?`
+
+为什么`yield`有参数而`return`没有参数？根本的原因在于`yield`会有返回值而`return`没有返回值。
+然而，由于这里没有参数，自然就不能传值。`expr`里有下面的规则。
+
+<pre class="emlist">
+kRETURN call_args
+</pre>
+
+`call_args`是剥离出的参数列表，它可以处理`return 1`和`return nil`。`return(1)`这种形式可以当作`return (1)`处理。
+这样说来，下面这样的两个以上的参数`return`是不能加上括号的。
+
+<pre class="emlist">
+return(1, 2, 3)   # 解释为return (1,2,3)，解析错误
+</pre>
+
+读过下一章《上下文相关的扫描器》，回过头来看这里就可以理解了。
+
+▼ `primary`(9)
+<pre class="longlist">
+                | operation brace_block
+                | method_call
+                | method_call brace_block
+</pre>
+
+方法调用。`method_call`含有参数（也可以有括号），`operation`既没有括号也没有参数。
+`brace_block`就是`{`-`}`或`do`-`end`，带有它的方法就是迭代器。既然是`brace`，为什么会包括`do`-`end`……
+这有比Mariana海沟更深远的理由，关于这点，还是请阅读下一章《上下文相关的扫描器》吧！
+
+▼ `primary`(10)
+<pre class="longlist">
+  | kIF expr_value then compstmt if_tail kEND         # if
+  | kUNLESS expr_value then compstmt opt_else kEND    # unless
+  | kWHILE expr_value do compstmt kEND                # while
+  | kUNTIL expr_value do compstmt kEND                # until
+  | kCASE expr_value opt_terms case_body kEND         # case
+  | kCASE opt_terms case_body kEND                    # case(形式2)
+  | kFOR block_var kIN expr_value do compstmt kEND    # for
+</pre>
+
+基本控制结构。稍有意外的是，如此大的概念居然会放在`primary` 这个“小”东西里面。
+因为`primary`也是`arg`，所以可以这样做。
+
+<pre class="emlist">
+p(if true then 'ok' end)   # 显示"ok"
+</pre>
+
+Ruby的特征之一是“大部分的语法元素都是表达式”。`if`和`while`出现在`primary`里便是具体的表现。
+
+将如此之“大的”语法元素放在`primary`里依然毫无问题，这是因为Ruby语法有“以终结符`A`开始以终结符`B`结束”这一特征。
+关于这一点，读了下一节再来考虑一下。
+
+▼ `primary`(11)
+<pre class="longlist">
+  | kCLASS cname superclass bodystmt kEND        # 类定义
+  | kCLASS tLSHFT expr term bodystmt kEND        # Singleton类定义
+  | kMODULE cname bodystmt kEND                  # 模块定义
+  | kDEF fname f_arglist bodystmt kEND           # 方法定义
+  | kDEF singleton dot_or_colon fname f_arglist bodystmt kEND
+                                                 # Singleton方法定义
+</pre>
+
+定义语句。类语句虽然称为类语句，但实际上应该称为类节（section）。
+因为这些都是“以终结符`A`开始以终结符`B`结束”的模式，加多少都没问题。
+
+▼ `primary`(12)
+<pre class="longlist">
+                | kBREAK
+                | kNEXT
+                | kREDO
+                | kRETRY
+</pre>
+
+各种跳转。从语法上说，这些没有什么。
+
+h3. 冲突列表
+
+前面提到将`if`放到`primary`里，这么做没问题吗？严格论证很困难，但可以直观的简单说明一下。
+下面用一个小规则模拟一下。
+
+<pre class="emlist">
+%token A B o
+%%
+element   : A item_list B
+
+item_list :
+          | item_list item
+
+item      : element
+          | o
+</pre>
+
+`element`是下面要讨论问题的关键。比如，考虑`if`时它就是`if`。`element`就是一个以终结符`A`开始以终结符`B`结束的列表。
+以`if`来说，就是以`if`开始以`end`结束。其内容中的`o`可以是方法、变量引用或是字面量。
+在元素列表中，`o`或`element`可以嵌套。
+
+以此语法为基础做出的解析器，分析下面的输入。
+
+<pre class="emlist">
+A  A  o  o  o  B  o  A  o  A  o  o  o  B  o  B  B
+</pre>
+
+这里有许多嵌套，没有缩进的帮助便很难理解。像下面这样考虑，就简单多了。
+一旦`A`和`B`之间只包含`o`，就可以将它们转化为`o`。只要重复这个过程就可以了。结果如图4所示。
+
+!images/ch_parser_ablist.png(解析“以A开始B结束的列表”的列表)!

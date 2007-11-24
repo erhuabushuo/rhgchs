@@ -627,7 +627,7 @@ return(1, 2, 3)   # 解释为return (1,2,3)，解析错误
 
 方法调用。`method_call`含有参数（也可以有括号），`operation`既没有括号也没有参数。
 `brace_block`就是`{`-`}`或`do`-`end`，带有它的方法就是迭代器。既然是`brace`，为什么会包括`do`-`end`……
-这有比Mariana海沟更深远的理由，关于这点，还是请阅读下一章《上下文相关的扫描器》吧！
+这的理由远比Mariana海沟更为深远，关于这点，还是请阅读下一章《上下文相关的扫描器》吧！
 
 ▼ `primary`(10)
 <pre class="longlist">
@@ -650,7 +650,7 @@ p(if true then 'ok' end)   # 显示"ok"
 Ruby的特征之一是“大部分的语法元素都是表达式”。`if`和`while`出现在`primary`里便是具体的表现。
 
 将如此之“大的”语法元素放在`primary`里依然毫无问题，这是因为Ruby语法有“以终结符`A`开始以终结符`B`结束”这一特征。
-关于这一点，读了下一节再来考虑一下。
+关于这一点，读过下一节再来考虑。
 
 ▼ `primary`(11)
 <pre class="longlist">
@@ -706,3 +706,305 @@ A  A  o  o  o  B  o  A  o  A  o  o  o  B  o  B  B
 一旦`A`和`B`之间只包含`o`，就可以将它们转化为`o`。只要重复这个过程就可以了。结果如图4所示。
 
 !images/ch_parser_ablist.png(解析“以A开始B结束的列表”的列表)!
+
+但如果结尾没有`B`的话……
+
+<pre class="emlist">
+%token A o
+%%
+element   : A item_list    /* 尝试去掉`B` */
+
+item_list :
+          | item_list item
+
+item      : element
+          | o
+</pre>
+
+用`yacc`处理会产生２个shift/reduce conflicts。也就是说，这个语法是有歧义的。
+仅仅去掉上面输入中的`B`，得到下面的输入。
+
+<pre class="emlist">
+A  A  o  o  o  o  A  o  A  o  o  o  o
+</pre>
+
+怎么都无法理解。当规则有shift/reduce conflits时，应该进行移进，
+尝试按规则以移进优先（即内侧优先）进行解析（图5）。
+
+!images/ch_parser_alist.png(解析“以A开始的列表”的列表)!
+
+解析暂时通过了。但结果和意图却完全不同，列表无法在中间切断。
+
+实际上，Ruby中省略括号的方法和这个差不多。有些难以理解的地方是，方法名和第一个参数合起来作为`A`。
+因为二者之间没有逗号，可以当作列表的开始识别出来。
+
+此外，“现实中”的 HTML也包含同样的模式。比如，`</p>`和`</li>`可以省略。
+正是因为这样，对于普通的的HTML来说，`yacc`根本不能通用。
+
+h2. 扫描器
+
+h3. 解析器概要
+
+在讲扫描器之前，先大致介绍一下解析器。请看图６。
+
+!images/ch_parser_interf.png(解析器接口(调用图))!
+
+解析器的正式接口有三个：`rb_compile_cstr()`、`rb_compile_string()`、`rb_compile_file()`。
+分别从C字符串、Ruby字符串对象、Ruby的`IO`对象读入程序进行编译。
+
+这几个函数直接或间接的调用`yycompile()`，最终将控制完全转给`yacc`生成的`yyparse()`。
+因为解析器的核心是`yyparse()`，可以以`yyparse()`为中心来把握。
+也就是说，`yyparse()`之前运行的函数都是在做准备，而`yyparse()`之后不过些是由`yyparse()`调用的辅助函数。
+
+`parse.y`中剩余的函数是由`yylex()`调用的辅助函数群，这些可以明确地进行分类。
+
+首先，扫描器最低层有个一输入缓冲。在`ruby`源码中，可以从Ruby的`IO`对象或字符串里得到输入，
+输入缓冲隐藏了这一差别，假装只有一个单一的字节流。
+
+下一个层次是Token缓冲。从输入缓冲中读出一个一个的字节，在形成一个完整的Token之前，便保留在这里。
+
+`yylex`的整体结构如图7所示。
+
+!images/ch_parser_scanner.png(扫描器的整体图)!
+
+h3. 输入缓冲
+
+首先，从输入缓冲看起。只有三个接口：`nextc()`、`pushback()`和`peek()`。
+
+好象有些乱，先从数据结构看起吧！输入缓冲用到的变量如下。
+
+▼ 输入缓冲
+<pre class="longlist">
+2279  static char *lex_pbeg;
+2280  static char *lex_p;
+2281  static char *lex_pend;
+
+(parse.y)
+</pre>
+
+缓冲开始、当前以及结束的位置。显然，这个缓冲就是简单的一维字符串缓冲(图8)。
+
+!images/ch_parser_ibuffer.png(输入缓冲)!
+
+h4. `nextc()`
+
+那么，看看用到这些变量的地方吧！最先想到的应该是`nextc()`。
+
+▼ `nextc()`
+<pre class="longlist">
+2468  static inline int
+2469  nextc()
+2470  {
+2471      int c;
+2472
+2473      if (lex_p == lex_pend) {
+2474          if (lex_input) {
+2475              VALUE v = lex_getline();
+2476
+2477              if (NIL_P(v)) return -1;
+2478              if (heredoc_end > 0) {
+2479                  ruby_sourceline = heredoc_end;
+2480                  heredoc_end = 0;
+2481              }
+2482              ruby_sourceline++;
+2483              lex_pbeg = lex_p = RSTRING(v)->ptr;
+2484              lex_pend = lex_p + RSTRING(v)->len;
+2485              lex_lastline = v;
+2486          }
+2487          else {
+2488              lex_lastline = 0;
+2489              return -1;
+2490          }
+2491      }
+2492      c = (unsigned char)*lex_p++;
+2493      if (c == '\r' && lex_p <= lex_pend && *lex_p == '\n') {
+2494          lex_p++;
+2495          c = '\n';
+2496      }
+2497
+2498      return c;
+2499  }
+
+(parse.y)
+</pre>
+
+开头的`if`用来判断输入缓冲是否到了最后。至于里面的`if`，可以想见，`else`里返回`-1`（`EOF`）表示输入结束。
+反过来说，输入结束时，`lex_input`就变成了0。
+
+
+这么说吧！输入缓冲是一小段一小段字符串读入的。那单位呢？更新缓冲函数的名字是`lex_getline()`，由此看来，应该是行。
+
+总结一下就是这样。
+
+<pre class="emlist">
+if (到达缓冲结尾)
+    if (还有输入)
+        读取下一行
+    else
+        return EOF
+指针前进
+略过CR 
+return c
+</pre>
+
+看看读取行的函数`lex_getline()`。这里还列出了这个函数用到的变量。
+
+▼ `lex_getline()`
+<pre class="longlist">
+2276  static VALUE (*lex_gets)();     /* gets function */
+2277  static VALUE lex_input;         /* non-nil if File */
+
+2420  static VALUE
+2421  lex_getline()
+2422  {
+2423      VALUE line = (*lex_gets)(lex_input);
+2424      if (ruby_debug_lines && !NIL_P(line)) {
+2425          rb_ary_push(ruby_debug_lines, line);
+2426      }
+2427      return line;
+2428  }
+
+(parse.y)
+</pre>
+
+除了第一行，怎么都好。（*）
+`lex_gets`是一个函数指针，用来读取一行，`lex_input`是原始输入。
+找一下设置`lex_gets`的地方，在下面。
+
+▼ 设定`lex_gets`
+<pre class="longlist">
+2430  NODE*
+2431  rb_compile_string(f, s, line)
+2432      const char *f;
+2433      VALUE s;
+2434      int line;
+2435  {
+2436      lex_gets = lex_get_str;
+2437      lex_gets_ptr = 0;
+2438      lex_input = s;
+
+2454  NODE*
+2455  rb_compile_file(f, file, start)
+2456      const char *f;
+2457      VALUE file;
+2458      int start;
+2459  {
+2460      lex_gets = rb_io_gets;
+2461      lex_input = file;
+
+(parse.y)
+</pre>
+
+`rb_io_gets()`并非解析器专用，它来自`ruby`通用的程序库，这个函数从`IO`对象中读取一行。
+
+另一个函数`lex_get_str()`，定义如下：
+
+▼ `lex_get_str()`
+<pre class="longlist">
+2398  static int lex_gets_ptr;
+
+2400  static VALUE
+2401  lex_get_str(s)
+2402      VALUE s;
+2403  {
+2404      char *beg, *end, *pend;
+2405
+2406      beg = RSTRING(s)->ptr;
+2407      if (lex_gets_ptr) {
+2408          if (RSTRING(s)->len == lex_gets_ptr) return Qnil;
+2409          beg += lex_gets_ptr;
+2410      }
+2411      pend = RSTRING(s)->ptr + RSTRING(s)->len;
+2412      end = beg;
+2413      while (end < pend) {
+2414          if (*end++ == '\n') break;
+2415      }
+2416      lex_gets_ptr = end - RSTRING(s)->ptr;
+2417      return rb_str_new(beg, end - beg);
+2418  }
+
+(parse.y)
+</pre>
+
+这个函数还不错。`lex_gets_ptr`记录着读到的位置。移动到下一个`\n`，同时截取到那里并返回。
+
+回到`nextc`。准备了两个接口相同的函数，这样在解析器初始化时，可以修改函数指针，而其它的部分则可以共享。
+将代码的差异转换为数据的差异，进而吸纳差异。`st_table`中有类似的做法。
+
+h4. `pushback()`
+
+了解过缓冲的物理结构和`nextc()`后，接下来的就简单了。用来写回一个字符的是`pushback()`。
+用C的说法，就是`ungetc()`。
+
+▼ `pushback()`
+<pre class="longlist">
+2501  static void
+2502  pushback(c)
+2503      int c;
+2504  {
+2505      if (c == -1) return;
+2506      lex_p--;
+2507  }
+
+(parse.y)
+</pre>
+
+h4. `peek()`
+
+在指针不前进的情况下，检查下面的字符的`peek()`(意思是“窥视”)。
+
+▼ `peek()`
+<pre class="longlist">
+2509  #define peek(c) (lex_p != lex_pend && (c) == *lex_p)
+
+(parse.y)
+</pre>
+
+h3. token缓冲
+
+token缓冲是接下来一级的缓冲。字符串会保存到token取出为止。接口有以下五个。
+
+|`newtok`|新建一个token|
+|`tokadd`|向缓冲中加入字符|
+|`tokfix`|终结缓存|
+|`tok`|指向缓冲字符串开始的指针|
+|`toklen`|缓冲字符串长度|
+|`toklast`|缓冲的字符串结尾字节|
+
+继续从数据结构开始看起吧！
+
+▼token缓冲
+<pre class="longlist">
+2271  static char *tokenbuf = NULL;
+2272  static int   tokidx, toksiz = 0;
+
+(parse.y)
+</pre>
+
+`tokenbuf`是缓冲，`tokidx`是token的结尾(因为是`int`类型，所以象是索引)，`toksiz`是缓冲长度。
+它与输入缓冲拥有相同的简单结构。画成图的话，如图9所示。
+
+!images/ch_parser_tbuffer.png(token缓冲)!
+
+继续来看接口，先来看新建token的`newtok()`。
+
+▼ `newtok()`
+<pre class="longlist">
+2516  static char*
+2517  newtok()
+2518  {
+2519      tokidx = 0;
+2520      if (!tokenbuf) {
+2521          toksiz = 60;
+2522          tokenbuf = ALLOC_N(char, 60);
+2523      }
+2524      if (toksiz > 4096) {
+2525          toksiz = 60;
+2526          REALLOC_N(tokenbuf, char, 60);
+2527      }
+2528      return tokenbuf;
+2529  }
+
+(parse.y)
+</pre>
+

@@ -1008,3 +1008,332 @@ token缓冲是接下来一级的缓冲。字符串会保存到token取出为止�
 (parse.y)
 </pre>
 
+因为不存在对整个缓冲进行初始化的接口，所以，缓冲有可能没有初始化。因此，
+最开始的`if`完成检查并初始化。`ALLOC_N()`是`ruby`定义的一个宏，与`calloc()`大致相同。
+
+分配长度的初始值是60，如果变得过大（`> 4096`），则返回一个小的值。
+一个token不可能有这么长，所以，这个大小是切合实际的。
+
+接下来看看向token缓冲中添加字符的`tokadd()`。
+
+▼ `tokadd()`
+<pre class="longlist">
+2531  static void
+2532  tokadd(c)
+2533      char c;
+2534  {
+2535      tokenbuf[tokidx++] = c;
+2536      if (tokidx >= toksiz) {
+2537          toksiz *= 2;
+2538          REALLOC_N(tokenbuf, char, toksiz);
+2539      }
+2540  }
+
+(parse.y)
+</pre>
+
+在一行里添加字符。检查token长度，超出缓冲的话，就做`REALLOC_N()`。
+`REALLOC_N()`指定参数的方式，就好象"与`calloc()`相同的"`realloc()`一样。
+
+这里总结了其余的接口。
+
+▼ `tokfix() tok() toklen() toklast()`
+<pre class="longlist">
+2511  #define tokfix() (tokenbuf[tokidx]='\0')
+2512  #define tok() tokenbuf
+2513  #define toklen() tokidx
+2514  #define toklast() (tokidx>0?tokenbuf[tokidx-1]:0)
+
+(parse.y)
+</pre>
+
+没有问题吧！
+
+h3. `yylex()`
+
+`yylex()`非常长。现在就有1000行以上。它的主体就是一个巨大的`switch`结构，根据字符选择不同的分支。
+先来看看省略一部分后的整体结构。
+
+▼ `yylex`概要
+<pre class="longlist">
+3106  static int
+3107  yylex()
+3108  {
+3109      static ID last_id = 0;
+3110      register int c;
+3111      int space_seen = 0;
+3112      int cmd_state;
+3113
+3114      if (lex_strterm) {
+              /* ……字符串的扫描…… */
+3131          return token;
+3132      }
+3133      cmd_state = command_start;
+3134      command_start = Qfalse;
+3135    retry:
+3136      switch (c = nextc()) {
+3137        case '\0':                /* NUL */
+3138        case '\004':              /* ^D */
+3139        case '\032':              /* ^Z */
+3140        case -1:                  /* end of script. */
+3141          return 0;
+3142
+3143          /* white spaces */
+3144        case ' ': case '\t': case '\f': case '\r':
+3145        case '\13': /* '\v' */
+3146          space_seen++;
+3147          goto retry;
+3148
+3149        case '#':         /* it's a comment */
+3150          while ((c = nextc()) != '\n') {
+3151              if (c == -1)
+3152                  return 0;
+3153          }
+3154          /* fall through */
+3155        case '\n':
+              /* ……省略…… */
+
+            case xxxx:
+                :
+              break;
+                :
+            /* 很多字符分支 */
+                :
+                :
+4103        default:
+4104          if (!is_identchar(c) || ISDIGIT(c)) {
+4105              rb_compile_error("Invalid char `\\%03o' in expression", c);
+4106              goto retry;
+4107          }
+4108
+4109          newtok();
+4110          break;
+4111      }
+
+          /* ……处理通常的标识符…… */
+      }
+
+(parse.y)
+</pre>
+
+`yylex()`的返回值零表示“输入结束”，非零表示token。
+
+请注意，“`c`”等非常简洁的变量在整体上的运用。读空格时的`space_seen++`会在后面用到。
+
+接下来就是根据字符不同进行分支处理，都是些单调的处理，读起来很枯燥。所以，缩小范围只看几个点。
+本书没有讲到所有的字符，不过，同样模式的都进行了简要的说明。
+
+h4. `'!'`
+
+先来看个简单的。
+
+▼ `yylex`-`'!'`
+<pre class="longlist">
+3205        case '!':
+3206          lex_state = EXPR_BEG;
+3207          if ((c = nextc()) == '=') {
+3208              return tNEQ;
+3209          }
+3210          if (c == '~') {
+3211              return tNMATCH;
+3212          }
+3213          pushback(c);
+3214          return '!';
+
+(parse.y)
+</pre>
+
+将代码的意思用文字写下来，可以对着读一下。
+
+<pre class="emlist">
+case '!':
+  状态转到EXPR_BEG 
+  if (下一字符是'=') {
+      token是'!='（tNEQ）
+  }
+  if (下一字符是'~') {
+      token是'!~'（tNMATCH）
+  }
+  若都是的话，退回一个已读的字符
+  token是'!'
+</pre>
+
+这个`case`很短，但依然能够展现出扫描器的重要规则，即“最长一致原则”。`“!=”`这两个字符有两种解释：
+“`!`和`=`”，
+或是“`!=`”。
+这里这种情况，必须选择`!=`。
+最长一致是程序语言扫描器的基本要求。
+
+`lex_state`是表示扫描器状态的变量。在下一章《上下文相关的扫描器》中，会讲到让你厌烦，这里就暂时忽略它。
+这里只要说一件事，很明显，`EXPR_BEG`表示“表达式开始”。无论是`not`、
+`!=`还是
+`!~`中的
+`!`，都是表达式的开始。
+
+h4. `'>'`
+
+接下来，作为`yylval`(符号的值)的例子，我们来看看`'>'`。
+
+▼ `yylex`-`'>'`
+<pre class="longlist">
+3296        case '>':
+3297          switch (lex_state) {
+3298            case EXPR_FNAME: case EXPR_DOT:
+3299              lex_state = EXPR_ARG; break;
+3300            default:
+3301              lex_state = EXPR_BEG; break;
+3302          }
+3303          if ((c = nextc()) == '=') {
+3304              return tGEQ;
+3305          }
+3306          if (c == '>') {
+3307              if ((c = nextc()) == '=') {
+3308                  yylval.id = tRSHFT;
+3309                  lex_state = EXPR_BEG;
+3310                  return tOP_ASGN;
+3311              }
+3312              pushback(c);
+3313              return tRSHFT;
+3314          }
+3315          pushback(c);
+3316          return '>';
+
+(parse.y)
+</pre>
+	
+忽略`yylval`以外的情况。阅读程序时，很重要的一点就是只关注一件事。
+
+`>=`对应于符号`tOP_ASGN`，这里将其值设为`tRSHFT`。这里用到的公用体成员是`id`，所以其类型应该是`ID`。
+`tOP_ASGN`是自赋值的符号，象`+=`、`-=`和`*=`等都会归结起来用它表示。那么，接下来就该区分什么样的自赋值作为值传了进去。
+
+为什么要把自赋值归结到一起呢，因为这样可以将规则变短。在扫描器中，很多有可能归结起来的都归结到了一起，
+这样，可以让规则很精简。那么为什么不将二元操作符归结到一起呢，这是因为它们的优先级不同。
+
+h4. `':'`
+
+如果扫描器能够完全独立于解析器，那就很简单了，可现实并不会这么简单。
+
+Ruby的语法特别复杂，会因为前面是否有空格而不同，也会因为周围切分token的状况而变化。
+下面的`':'`代码就是一个空格影响行为的例子。
+
+▼ `yylex`-`':'`
+<pre class="longlist">
+3761        case ':':
+3762          c = nextc();
+3763          if (c == ':') {
+3764              if (lex_state == EXPR_BEG ||  lex_state == EXPR_MID ||
+3765                  (IS_ARG() && space_seen)) {
+3766                  lex_state = EXPR_BEG;
+3767                  return tCOLON3;
+3768              }
+3769              lex_state = EXPR_DOT;
+3770              return tCOLON2;
+3771          }
+3772          pushback(c);
+3773          if (lex_state == EXPR_END ||
+                  lex_state == EXPR_ENDARG ||
+                  ISSPACE(c)) {
+3774              lex_state = EXPR_BEG;
+3775              return ':';
+3776          }
+3777          lex_state = EXPR_FNAME;
+3778          return tSYMBEG;
+
+(parse.y)
+</pre>
+
+这次忽略`lex_state`，只要关注`space_seen`的周围就可以了。
+
+`space_seen`是这样一个变量，token前如果有空格就为真。如果它为真，也就是说`'::'`前面有空格，结果就是`tCOLON3`，
+前面没有空格的话，就是`tCOLON2`。这和前一节`primary`里的说明是一致的。
+
+h4. 标识符
+
+目前为止，看到的符号最多只有一两个字符，现在就来看看稍长一点的东西吧。标识符的扫描模式。
+
+先来看看`yylex`的整体结构。
+
+<pre class="emlist">
+yylex(...)
+{
+    switch (c = nextc()) {
+      case xxxx:
+        ....
+      case xxxx:
+        ....
+      default:
+    }
+
+    扫描标识符的代码
+}
+</pre>
+
+接下来的代码引用自那个巨型`switch`结尾的部分。稍有些长，加了些注释。
+
+▼ `yylex`-标识符
+<pre class="longlist">
+4081        case '@':                 /* 实例变量或类变量 */
+4082          c = nextc();
+4083          newtok();
+4084          tokadd('@');
+4085          if (c == '@') {         /* @@、也就是类变量 */
+4086              tokadd('@');
+4087              c = nextc();
+4088          }
+4089          if (ISDIGIT(c)) {       /* @1等 */
+4090              if (tokidx == 1) {
+4091    rb_compile_error("`@%c' is not a valid instance variable name", c);
+4092              }
+4093              else {
+4094    rb_compile_error("`@@%c' is not a valid class variable name", c);
+4095              }
+4096          }
+4097          if (!is_identchar(c)) { /* @后面是奇怪的字符 */
+4098              pushback(c);
+4099              return '@';
+4100          }
+4101          break;
+4102
+4103        default:
+4104          if (!is_identchar(c) || ISDIGIT(c)) {
+4105              rb_compile_error("Invalid char `\\%03o' in expression", c);
+4106              goto retry;
+4107          }
+4108
+4109          newtok();
+4110          break;
+4111      }
+4112
+4113      while (is_identchar(c)) {   /* 标识符中能够使用的字符…… */
+4114          tokadd(c);
+4115          if (ismbchar(c)) {      /* 如果是多字节字符的开始字节 */
+4116              int i, len = mbclen(c)-1;
+4117
+4118              for (i = 0; i < len; i++) {
+4119                  c = nextc();
+4120                  tokadd(c);
+4121              }
+4122          }
+4123          c = nextc();
+4124      }
+4125      if ((c == '!' || c == '?') &&
+              is_identchar(tok()[0]) &&
+              !peek('=')) {      /* name!或是name?的结尾字符 */
+4126          tokadd(c);
+4127      }
+4128      else {
+4129          pushback(c);
+4130      }
+4131      tokfix();
+
+(parse.y)
+</pre>
+
+请注意最后添加`!`/`?`的条件。这部分是为了解释下面这种情况。
+
+<pre class="emlist">
+obj.m=1       # obj.m  =   1       (而不是obj.m= ...)
+obj.m!=1      # obj.m  !=  1       (而不是obj.m! ...)
+</pre>
+
+也就是说，“不是”最长一致。最长一致只是原则而非规则，所以，有时可能会违背。

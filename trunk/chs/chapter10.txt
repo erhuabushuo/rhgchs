@@ -1337,3 +1337,416 @@ obj.m!=1      # obj.m  !=  1       (而不是obj.m! ...)
 </pre>
 
 也就是说，“不是”最长一致。最长一致只是原则而非规则，所以，有时可能会违背。
+
+h4. 保留字
+
+扫描过标识符之后，其实还有100行左右的代码，那里才会得出实际的token。
+之前的代码是把实例变量、类变量和局部变量一起扫描的，这里要重新分类。
+
+这还不错，不过，有一些项稍有不同。那就是要将保留字筛选出来。保留字和局部变量没什么区别，
+所以，一起扫描之后再分类会更高效。
+
+那么，对于`char*`类型的字符串`str`，如何区分它是不是保留字呢？首先，我们当然可以用`if`和`strcmp()`不断地比较。
+不过这种做法很不聪明。没有弹性。速度也会线性增加。
+
+通常的做法是，把数据放到列表或hash表中，这样完成的代码就会很短。
+
+<pre class="emlist">
+/* 将代码转换为数据 */
+struct entry {char *name; int symbol;};
+struct entry *table[] = {
+    {"if",     kIF},
+    {"unless", kUNLESS},
+    {"while",  kWHILE},
+    /* ……省略…… */
+};
+
+{
+    ....
+    return lookup_symbol(table, tok());
+}
+</pre>
+
+`ruby`是怎么做的呢？用hash表。它也是一个完全hash表。谈及`st_table`时说过，如果能够预先知道键值可能的集合，
+就可以做出完全没有冲突的hash函数。保留字刚好是“能够预先知道键值可能的集合”，所以，可以做成完全hash函数。
+
+但是“可以做”和实际做是两码事。不可能手工做这件事。保留字可能会增加或减少，所以，这个工作必须自动化。
+
+这里用的是`gperf`。`gperf`是一个GNU的程序，它根据一个值的集合生成完全哈希函数。
+关于`gperf`自身详细的用法可以用`man gperf`命令得到，这里只说明如何使用生成的结果。
+
+在`ruby`中，`gperf`的输入文件是`keywords`，输出是`lex.c`。`parse.y`直接`#include`进来。
+一般来说，将C文件`#include`进来并不好，为了一个根本不能分割的函数分出一个文件更加不值得。
+特别是在`ruby`里，`extern`函数不知什么时候可能会被扩展程序库用到，所以，对于那些不想保持兼容性的函数，
+尽可能做成`static`。
+
+`lex.c`定义了`rb_reserved_word()`这个函数。用保留字的`char*`指针作为键值进行检索。
+就返回值来说，找不到返回`NULL`，找到（也就是说参数是保留字），返回一个`struct kwtable*`指针。
+`struct kwtable`的定义如下。
+
+▼ `kwtable`
+<pre class="longlist">
+   1  struct kwtable {char *name; int id[2]; enum lex_state state;};
+
+(keywords)
+</pre>
+
+`name`是保留字的字面量，`id[0]`是那个token，`id[1]`是用作修饰符的token(`kIF_MOD`等)。
+`lex_state`是“读取保留字之后应该转移到的`lex_state`”。`lex_state`将在下一章说明。
+实际上，检索就在这附近。
+
+▼ `yylex()`-标识符-调用`rb_reserved_word()`
+<pre class="longlist">
+4173                  struct kwtable *kw;
+4174
+4175                  /* See if it is a reserved word.  */
+4176                  kw = rb_reserved_word(tok(), toklen());
+4177                  if (kw) {
+
+(parse.y)
+</pre>
+
+h3. 字符串类
+
+如果`yylex()`看到双引号（`“`），会变成这样。
+
+▼ `yylex`-`'"'`
+<pre class="longlist">
+3318        case '"':
+3319          lex_strterm = NEW_STRTERM(str_dquote, '"', 0);
+3320          return tSTRING_BEG;
+
+(parse.y)
+</pre>
+
+只扫描一个字符就结束了。看一下规则的话，会在下面的规则中找到`tSTRING_BEG`。
+
+▼ 字符串相关的规则
+<pre class="longlist">
+string1         : tSTRING_BEG string_contents tSTRING_END
+
+string_contents :
+                | string_contents string_content
+
+string_content  : tSTRING_CONTENT
+                | tSTRING_DVAR string_dvar
+                | tSTRING_DBEG term_push compstmt '}'
+
+string_dvar     : tGVAR
+                | tIVAR
+                | tCVAR
+                | backref
+
+term_push       :
+</pre>
+
+这些规则是为了对应在字符串中嵌入表达式而引入的。`tSTRING_CONTENT`是字面量部分，
+`tSTRING_DBEG`就是`"#{"`。`tSTRING_DVAR`表示“跟着变量的`#`”。比如
+
+<pre class="emlist">
+".....#$gvar...."
+</pre>
+
+是这样的语法结构。没说明的情况下，如果嵌入的只是一个变量，可以省略`{`和`}`。但不推荐这么做。
+顺便说一下，一般认为`DVAR`、`DBEG`的`D`是`dynamic`的缩写。
+
+另外，`backref`表示`$1 $2`和`$& $'`之类与正则表达式有关的特殊变量。
+
+`term_push`是“一个动作规则”。
+
+那么，回到`yylex()`。简单的回到解析器中，上下文应该是在字符串“中”。接下来，`yylex()`扫描出变量、`if`之类的，
+就会很麻烦。因此，就要做很重要的工作……
+
+<pre class="emlist">
+      case '"':
+        lex_strterm = NEW_STRTERM(str_dquote, '"', 0);
+        return tSTRING_BEG;
+</pre>
+
+……就是`lex_strterm`。回到`yylex()`的开始。
+
+▼ `yylex()`开始
+<pre class="longlist">
+3106  static int
+3107  yylex()
+3108  {
+3109      static ID last_id = 0;
+3110      register int c;
+3111      int space_seen = 0;
+3112      int cmd_state;
+3113
+3114      if (lex_strterm) {
+              /* ……字符串的扫描…… */
+3131          return token;
+3132      }
+3133      cmd_state = command_start;
+3134      command_start = Qfalse;
+3135    retry:
+3136      switch (c = nextc()) {
+
+(parse.y)
+</pre>
+
+如果存在`lex_strterm`，不用说，进入了字符串模式。反过来说，`lex_strterm`存在时，正在扫描字符串，
+不过，处理嵌入表达式时，必须先将`lex_strterm`置0.。并且，必须在结束嵌入表达式处理时返还。
+下面便是做这个的部分。
+
+▼ `string_content`
+<pre class="longlist">
+1916  string_content  : ....
+1917                  | tSTRING_DBEG term_push
+1918                      {
+1919                          $<num>1 = lex_strnest;
+1920                          $<node>$ = lex_strterm;
+1921                          lex_strterm = 0;
+1922                          lex_state = EXPR_BEG;
+1923                      }
+1924                    compstmt '}'
+1925                      {
+1926                          lex_strnest = $<num>1;
+1927                          quoted_term = $2;
+1928                          lex_strterm = $<node>3;
+1929                          if (($$ = $4) && nd_type($$) == NODE_NEWLINE) {
+1930                              $$ = $$->nd_next;
+1931                              rb_gc_force_recycle((VALUE)$4);
+1932                          }
+1933                          $$ = NEW_EVSTR($$);
+1934                      }
+
+(parse.y)
+</pre>
+
+在嵌入动作中，`lex_strterm`作为`tSTRING_DBEG`的值被保存起来(实际上是压入堆栈)，并在常规动作中返回（退栈）。
+这是个相当好的办法。
+
+可是为什么要做这么麻烦的事呢？像通常的做法，扫描到“`#{`”再调一次`yyparse()`不就行了吗？实际上这么做有个问题。
+`yyparse()`是不能递归调用的。这是`yacc`众所周知的限制。用来传值的`yylval`是一个全局变量，无心的递归会破坏它的值。
+`bison`(GNU的`yacc`)有一个称为`%pure_parser`的预处理指令（directive）可以实现递归，但现在的`ruby`并会假定使用`bison`。
+因为在现实中，源自BSD的OS和Windows等常常使用的是`byacc`（Berkeley yacc），这样说来，以`bison`作为前提就不太好了。
+
+h4. `lex_strterm`
+
+前面已经看到了，`lex_strterm`的真假在扫描中表示是否处于字符串模式。实际上，它的值也是有意义的。先来看看它的类型。
+
+▼ `lex_strterm`
+<pre class="longlist">
+  72  static NODE *lex_strterm;
+
+(parse.y)
+</pre>
+
+从这里的定义可以看到，其类型是`NODE*`。这是语法树使用的节点类型。第12章《语法树的构建》中会详细说明。
+首先，它是一个有三个元素的结构体，再有，它是`VALUE`，无需`free()`，记住这两点就够了。
+
+▼ `NEW_STRTERM()`
+<pre class="longlist">
+2865  #define NEW_STRTERM(func, term, paren) \
+2866          rb_node_newnode(NODE_STRTERM, (func), (term), (paren))
+
+(parse.y)
+</pre>
+
+这个宏用以新建一个保存`lex_strterm`的结点。`term`是字符串的分界符。比如，如果是`"`字符串，就是`"`。如果是`'`字符串，就是`'`。
+
+`paren`保存`%`字符串中括号里面的内容。比如：
+
+<pre class="emlist">
+%Q(..........)
+</pre>
+
+`paren`中以`'('`表示开始，因此，`term`要以`')'`表示结束。`%`字符串以外的情况，`paren`是0。
+
+最后是`func`，表示字符串的种类。可以使用的种类有以下几种。
+
+▼ `func`
+<pre class="longlist">
+2775  #define STR_FUNC_ESCAPE 0x01  /* \n之类的反斜杠有效 */
+2776  #define STR_FUNC_EXPAND 0x02  /* 嵌入式有效 */
+2777  #define STR_FUNC_REGEXP 0x04  /* 正则表达式 */
+2778  #define STR_FUNC_QWORDS 0x08  /* %w(....)或是%W(....) */
+2779  #define STR_FUNC_INDENT 0x20  /* <<-EOS(结束符可缩进) */
+2780
+2781  enum string_type {
+2782      str_squote = (0),
+2783      str_dquote = (STR_FUNC_EXPAND),
+2784      str_xquote = (STR_FUNC_ESCAPE|STR_FUNC_EXPAND),
+2785      str_regexp = (STR_FUNC_REGEXP|STR_FUNC_ESCAPE|STR_FUNC_EXPAND),
+2786      str_sword  = (STR_FUNC_QWORDS),
+2787      str_dword  = (STR_FUNC_QWORDS|STR_FUNC_EXPAND),
+2788  };
+
+(parse.y)
+</pre>
+
+也就是说，`enum string_type`中的各项意义如下：
+
+|`str_squote`|`'`字符串/`%q`|
+|`str_dquote`|`"`字符串/`%Q`|
+|`str_xquote`|命令字符串(本书没有说明)|
+|`str_regexp`|正则表达式|
+|`str_sword`|`%w`|
+|`str_dword`|`%W`|
+
+h4. 字符串扫描函数
+
+接下来是字符串模式时的`yylex()`，也就是开始的`if`。
+
+▼ `yylex`-字符
+<pre class="longlist">
+3114      if (lex_strterm) {
+3115          int token;
+3116          if (nd_type(lex_strterm) == NODE_HEREDOC) {
+3117              token = here_document(lex_strterm);
+3118              if (token == tSTRING_END) {
+3119                  lex_strterm = 0;
+3120                  lex_state = EXPR_END;
+3121              }
+3122          }
+3123          else {
+3124              token = parse_string(lex_strterm);
+3125              if (token == tSTRING_END || token == tREGEXP_END) {
+3126                  rb_gc_force_recycle((VALUE)lex_strterm);
+3127                  lex_strterm = 0;
+3128                  lex_state = EXPR_END;
+3129              }
+3130          }
+3131          return token;
+3132      }
+
+(parse.y)
+</pre>
+
+基本上分成here document和其他部分。这里不理会`parse_string()`。它的前面有大量的条件存在，
+使其变成一段意大利面式的代码。即便举例说明，你也一定发牢骚，“就这样的代码！”
+而且，同付出相比，显得索然无趣。
+
+当然，不会完全不说明。在附赠CD-ROM中，解析了每个扫描函数。有兴趣的读者可以看看。
+
+h4. Here Document
+
+和一般的字符串相比，here document有趣多了。和其它的元素不同，它是以“行”为单位的。
+而且将起始符号放在程序的中间挺可怕的。先从扫描到here document起始符号的`yylex()`代码开始吧！
+
+▼ `yylex`-`'<'`
+<pre class="longlist">
+3260        case '<':
+3261          c = nextc();
+3262          if (c == '<' &&
+3263              lex_state != EXPR_END &&
+3264              lex_state != EXPR_DOT &&
+3265              lex_state != EXPR_ENDARG &&
+3266              lex_state != EXPR_CLASS &&
+3267              (!IS_ARG() || space_seen)) {
+3268              int token = heredoc_identifier();
+3269              if (token) return token;
+
+(parse.y)
+</pre>
+
+先忽略这个例子中的一堆`lex_state`。这里只读到“`<<`”，剩下的就是用`heredoc_identifier()`做一些扫描。
+下面便是`heredoc_identifier()`。
+
+▼ `heredoc_identifier()`
+<pre class="longlist">
+2926  static int
+2927  heredoc_identifier()
+2928  {
+          /* ……省略……读起始符号 */
+2979      tokfix();
+2980      len = lex_p - lex_pbeg;   /*(A)*/
+2981      lex_p = lex_pend;         /*(B)*/
+2982      lex_strterm = rb_node_newnode(NODE_HEREDOC,
+2983                          rb_str_new(tok(), toklen()),  /* nd_lit */
+2984                          len,                          /* nd_nth */
+2985          /*(C)*/       lex_lastline);                /* nd_orig */
+2986
+2987      return term == '`' ? tXSTRING_BEG : tSTRING_BEG;
+2988  }
+
+(parse.y)
+</pre>
+	
+读开始符号(`<<EOS`)怎么做都可以，这里就省略了。到这里，输入缓冲应该如图10所示。
+还记得输入缓冲是以行为单位吧！
+
+!images/ch_parser_lexparams.png(`"printf(<<EOS, n)"`的扫描)!
+
+`heredoc_identifier()`所做的事情如下。
+（A）`len`是读入行中的字节数。
+（B）`lex_p`一下指到了行尾。
+也就是说，读入行中的起始符号之后的部分被忽略了。那剩下部分什么时候解析呢？
+（C）将`lex_lastline`（读入行）和`len`（已经读到的长度）保存下来暗示了这个神秘问题的答案。
+
+`heredoc_identifier()`前后的动态调用图可以简单地表示如下。
+
+<pre class="emlist">
+yyparse
+    yylex(case '<')
+        heredoc_identifier(lex_strterm = ....)
+    yylex(开始的if)
+        here_document
+</pre>
+
+这个`here_document()`用以扫描here document的正文。下面是`here_document()`，忽略了异常情况，
+并加了注释。请注意，`lex_strterm`是在`heredoc_identifier()`里赋值的。
+
+▼ `here_document()`(简化版)
+<pre class="longlist">
+here_document(NODE *here)
+{
+    VALUE line;                      /* 扫描中的行 */
+    VALUE str = rb_str_new("", 0);   /* 保存结果的字符串 */
+
+    /* ……异常处理，省略…… */
+
+    if (表达式中的嵌入表达式) {
+        do {
+            line = lex_lastline;     /*(A)*/
+            rb_str_cat(str, RSTRING(line)->ptr, RSTRING(line)->len);
+            lex_p = lex_pend;        /*(B)*/
+            if (nextc() == -1) {     /*(C)*/
+                goto error;
+            }
+        } while (扫描中的行不是结束符号);
+    }
+    else {
+        /* 表达式中的嵌入表达式有效的情况……略 */
+    }
+    heredoc_restore(lex_strterm);
+    lex_strterm = NEW_STRTERM(-1, 0, 0);
+    yylval.node = NEW_STR(str);
+    return tSTRING_CONTENT;
+}
+</pre>
+
+`rb_str_cat()`是在Ruby字符串结尾连上`char*`的函数。也就是说，（A）读入行`lex_lastline`连接到`str`。
+连号后，这一行就结束了。（B）`lex_p`一下指到了行尾。（C）有些问题，看起来，这里是在做结束检查，
+而实际上是读入下一行。希望记住，`nextc()`的规范是一行读完后便会去读下一行。
+正式因为（B）强行结束了一行，所以，（C）将`lex_p`指向了下一行。
+
+最后是从`do` `while`循环里提取出的`heredoc_restore()`。
+
+▼ `heredoc_restore()`
+<pre class="longlist">
+2990  static void
+2991  heredoc_restore(here)
+2992      NODE *here;
+2993  {
+2994      VALUE line = here->nd_orig;
+2995      lex_lastline = line;
+2996      lex_pbeg = RSTRING(line)->ptr;
+2997      lex_pend = lex_pbeg + RSTRING(line)->len;
+2998      lex_p = lex_pbeg + here->nd_nth;
+2999      heredoc_end = ruby_sourceline;
+3000      ruby_sourceline = nd_line(here);
+3001      rb_gc_force_recycle(here->nd_lit);
+3002      rb_gc_force_recycle((VALUE)here);
+3003  }
+
+(parse.y)
+</pre>
+
+`here->nd_orig`中放的是有起始符号的那一行。`here->nd_nth`中放的是起始符号那一行中已经读入的长度。
+也就是紧接着开始符号继续扫描，好象什么都没发生过一样。
+
+!images/ch_parser_heredoc.png(here document的扫描分解图)!

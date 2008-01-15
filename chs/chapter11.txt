@@ -37,7 +37,7 @@ a  +1      # a(+1)
 obj.`("cvs diff parse.y")   # 一般的方法调用
 </pre>
 
-这里，前者采用了字面量的形式进行方法调用，而后者用的是一般形式的方法调用（“`”是方法名）。
+这里，前者采用了字面量的形式进行方法调用，而后者用的是一般形式的方法调用。
 根据上下文的不同对应的操作也不同。上下文不同，处理会有很大差异。
 
 下面的例子作用上差异极大。
@@ -55,3 +55,53 @@ list << nil    # list.push(nil)
 
 像这样的Ruby的语法，确实存在很多实现不是很合适的地方。即便不详细的列举，一章也不介绍不完。
 因此，本章的讨论限定在基础原理和难度极高的部分。
+
+h3. `lex_state`
+
+`lex_state`是一个变量。不用说，`lex`就是`lexer`的`lex`，这个变量表示的是扫描器的状态（state）。
+
+有哪些状态呢？看一下定义。
+
+▼enum lex_state
+
+<pre class="longlist">
+ 61  static enum lex_state {
+  62      EXPR_BEG,      /* ignore newline, +/- is a sign. */
+  63      EXPR_END,      /* newline significant, +/- is a operator. */
+  64      EXPR_ARG,      /* newline significant, +/- is a operator. */
+  65      EXPR_CMDARG,   /* newline significant, +/- is a operator. */
+  66      EXPR_ENDARG,   /* newline significant, +/- is a operator. */
+  67      EXPR_MID,      /* newline significant, +/- is a operator. */
+  68      EXPR_FNAME,    /* ignore newline, no reserved words. */
+  69      EXPR_DOT,      /* right after `.' or `::', no reserved words. */
+  70      EXPR_CLASS,    /* immediate after `class', no here document. */
+  71  } lex_state;
+
+(parse.y)
+</pre>
+
+前缀中的`EXPR_`是expression（表达式）的意思。比如，`EXPR_BEG`是"表达式开始"，而`EXPR_DOT`是"表达式中，点之后"。
+
+具体说明一下。`EXPR_BEG`表示“在表达式开始”。`EXPR_END`表示“在表达式结尾”。`EXPR_ARG`表示"在方法的参数前"。
+`EXPR_FNAME`表示"（def等）方法名称前"。跳过的部分会在后面详细分析。
+
+顺便说一下，`lex_state`表示的是类似于“括号后”、“语句头”之类的信息，这并不是扫描器的状态，而是解析器的状态。
+但通常称为扫描器的状态，这是为什么呢？
+
+这里所说的“状态”和通常所说的“状态”有些差异。`lex_state`中所谓的“状态”指的是“扫描器可以有这样行为的状态”。
+比如，准确的说，`EXPR_BEG`表示“如果扫描器现在工作的话，它应该运行到语句开始的状态”。
+
+用专业术语描述，就是把扫描器当作状态机考虑时的状态。然而，这样确实很难解释，而且离题甚远。
+至于细节，有兴趣的读者可以适当的阅读数据结构相关的教科书。
+
+h3. 上下文相关扫描器的阅读与理解
+
+阅读上下文相关的扫描器不大可能一次掌握全部要点。写解析器的人通常不会使用上下文相关的扫描器。这是当然的，因为它并非处理的主线。
+因此，扫描器的状态管理便是“其他主线部分的附属品”。总而言之，扫描器状态变迁的整体之美并非最初便存在的。
+
+那要怎么做才好呢？有意识的通读代码应该是很好的。“这个部分处理这里”、“这段代码解决了这个问题”，根据这些目的删除这些代码。
+开始便考虑问题相互之间关系，这是绝对行不通的。再说一遍，最初并不是这样。
+
+虽然那么说，有个某种程度上的目标还是必要的。阅读上下文相关的扫描器时的目标是，每一种状态究竟是处于怎样一种状态。
+比如`EXPR_BEG`是怎样一种状态。解析器处于表达式开始。就这样。
+

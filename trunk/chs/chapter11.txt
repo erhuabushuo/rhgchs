@@ -1,5 +1,5 @@
 $comment(-*- coding: utf-8 -*- vim: set encoding=utf-8:)$
-Translated by Li Linghui, bigpanda
+Translated by Li Linghui, bigpanda, Ye Zheng
 
 h1. 第十一章：上下文相关的扫描器
 
@@ -62,10 +62,10 @@ h3. `lex_state`
 
 有哪些状态呢？看一下定义。
 
-▼enum lex_state
+▼`enum lex_state`
 
 <pre class="longlist">
- 61  static enum lex_state {
+  61  static enum lex_state {
   62      EXPR_BEG,      /* ignore newline, +/- is a sign. */
   63      EXPR_END,      /* newline significant, +/- is a operator. */
   64      EXPR_ARG,      /* newline significant, +/- is a operator. */
@@ -185,3 +185,128 @@ h3. 关于各种状态
 * FNAME DOT
 
 上面展示了各种相似的情况。只有`EXPR_CLASS`稍有特殊，它出现的情况很有限，起初可以不必考虑它。
+
+h2. 换行控制
+
+h3. 问题
+
+Ruby的语句不一定会有终结符。例如，C和JAVA中一定要在语句末尾放置分号，但在Ruby中没这个必要。
+因为基本上一行就是一条语句，行末就是语句的结束。
+
+但另一方面，在“明显是继续”的情况下，语句便会自动继续下去。所谓“明显是继续”的状态是
+* 逗号之后
+* 中缀运算符之后
+* 括号不对称
+* 紧跟在保留字`if`之后
+
+等情况。
+
+h3. 实现
+
+怎么做才能实现这样的语法呢？仅仅在扫描器中跳过换行是不够的。
+虽然即便C语言采用像Ruby一样，依靠语句两端的保留字进行分割的语法，也不会产生冲突，不过，稍微尝试一下就会知道，
+`return、next、break`以及方法调用的括号是无法省略的。对于剩余的部分，必须在语句结尾有一个终结符号。
+无论是`\n`还是`;`，总之后面要有一个终结符号。
+
+这里有两种解决方案。也就是说，用解析器解决，或是用扫描器解决。用解析器解决，允许`\n`的地方全部选择放置`\n`的语法。
+如果用扫描器解决，只在`\n`有意义的地方传给解析器一个`\n`（其它的地方跳过）。
+
+使用哪种方式是兴趣问题，不过，通常会选择扫描器。总体上说，这会让代码变得更加紧凑，而在解析器中加入一些无谓的记号，让规则变得模糊，
+使用解析器会也就是去了意义。
+
+这样看来，`ruby`的换行处理是由扫描器处理的。希望继续某行的时候，就跳过`\n`，希望终止的时候，就将`\n`作为记号送出。
+`yylex()`的实现如下。
+
+▼`yylex()−'\n'`
+
+<pre class="longlist">
+3155        case '\n':
+3156          switch (lex_state) {
+3157            case EXPR_BEG:
+3158            case EXPR_FNAME:
+3159            case EXPR_DOT:
+3160            case EXPR_CLASS:
+3161              goto retry;
+3162            default:
+3163              break;
+3164          }
+3165          command_start = Qtrue;
+3166          lex_state = EXPR_BEG;
+3167          return '\n';
+
+(parse.y)
+</pre>
+
+对于`EXPR_BEG`、`EXPR_FNAME`、`EXPR_DOT`或`EXPR_CLASS`，会`goto retry`，因为没有意义跳过不读。
+retry标签在`yylex()`的巨大的`switch`前面。
+
+在其它地方，换行是有意义的，就要传给解析器，顺便将`lex_state`的赋值为`EXPR_BEG`。换行有意义的地方是因为它切分了`expr`。
+
+至于`command_start`，目前可以忽视。正如前面所说，求全责备会带来混乱。
+
+看一些稍微具体的例子。立即使用附带的分析工具`rubylex-analyser`。
+
+<pre class="screen">
+% rubylex-analyser -e '
+m(a,
+  b, c) unless i
+'
++EXPR_BEG
+EXPR_BEG     C      "\nm"  tIDENTIFIER          EXPR_CMDARG
+EXPR_CMDARG           "("  '('                  EXPR_BEG
+                                              0:cond push
+                                              0:cmd push
+EXPR_BEG     C        "a"  tIDENTIFIER          EXPR_CMDARG
+EXPR_CMDARG           ","  ','                  EXPR_BEG
+EXPR_BEG    S     "\n  b"  tIDENTIFIER          EXPR_ARG
+EXPR_ARG              ","  ','                  EXPR_BEG
+EXPR_BEG    S         "c"  tIDENTIFIER          EXPR_ARG
+EXPR_ARG              ")"  ')'                  EXPR_END
+                                              0:cond lexpop
+                                              0:cmd lexpop
+EXPR_END    S    "unless"  kUNLESS_MOD          EXPR_BEG
+EXPR_BEG    S         "i"  tIDENTIFIER          EXPR_ARG
+EXPR_ARG             "\n"  \n                   EXPR_BEG
+EXPR_BEG     C       "\n"  '                    EXPR_BEG
+</pre>
+
+有很多输出，不过，这里有用的只是左栏和中栏。左栏表示进入`yylex()`之前的`lex_state`，中栏表示规则正在处理的记号。
+
+首先，在第一个记号`m`之前和第二个实参`b`之前，换行符`\n`与记号紧贴在一起，而并不是作为终结符出现。因为`lex_state`的状态是`EXPR_BEG`。
+
+然而，第二行的`\n`却是作为终结符出现的，因为它是`EXPR_ARG`。
+
+这样用就可以了。稍微再看一个例子。
+
+<pre class="screen">
+% rubylex-analyser -e 'class
+C < Object
+end'
++EXPR_BEG
+EXPR_BEG     C    "class"  kCLASS               EXPR_CLASS
+EXPR_CLASS          "\nC"  tCONSTANT            EXPR_END
+EXPR_END    S         "<"  '<'                  EXPR_BEG
++EXPR_BEG
+EXPR_BEG    S    "Object"  tCONSTANT            EXPR_ARG
+EXPR_ARG             "\n"  \n                   EXPR_BEG
+EXPR_BEG     C      "end"  kEND                 EXPR_END
+EXPR_END             "\n"  \n                   EXPR_BEG
+</pre>
+
+保留字`class`后面，因为是`EXPR_CLASS`而忽略换行。
+
+然而，在超类`Object`后，因为是`EXPR_ARG`，`\n`又出现了。
+
+<pre class="screen">
+% rubylex-analyser -e 'obj.
+class'
++EXPR_BEG
+EXPR_BEG     C      "obj"  tIDENTIFIER          EXPR_CMDARG
+EXPR_CMDARG           "."  '.'                  EXPR_DOT
+EXPR_DOT        "\nclass"  tIDENTIFIER          EXPR_ARG
+EXPR_ARG             "\n"  \n                   EXPR_BEG
+</pre>
+
+`.`之后，因为是`EXPR_DOT`而忽略`\n`。
+
+对了，`class`应该是保留字，为什么成了`tIDENTIFIER`呢？下面一节来讨论。

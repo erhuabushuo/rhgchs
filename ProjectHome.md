@@ -1,0 +1,1 @@
+Translate Ruby Hacking Guide into Chinese.
